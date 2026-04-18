@@ -1,0 +1,855 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: NeXTrade Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: User account operations
+  - name: wallets
+    description: Wallet operations
+  - name: trades
+    description: Trading operations
+  - name: managers
+    description: Account manager operations
+  - name: messages
+    description: Messaging operations
+  - name: p2p
+    description: P2P trading operations
+  - name: support
+    description: Customer support operations
+  - name: assets
+    description: Asset purchase operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /wallets:
+    get:
+      operationId: getWallets
+      tags: [wallets]
+      summary: Get user wallets
+      responses:
+        "200":
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wallet"
+
+  /wallets/transactions:
+    get:
+      operationId: getTransactions
+      tags: [wallets]
+      summary: Get wallet transactions
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /wallets/connect:
+    post:
+      operationId: connectExternalWallet
+      tags: [wallets]
+      summary: Connect an external wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectWalletRequest"
+      responses:
+        "200":
+          description: Connected wallet info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectedWallet"
+
+  /trades:
+    get:
+      operationId: getTrades
+      tags: [trades]
+      summary: Get user trades
+      responses:
+        "200":
+          description: List of trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+
+  /trades/social-wallet:
+    get:
+      operationId: getSocialTradingWallet
+      tags: [trades]
+      summary: Get social trading wallet summary
+      responses:
+        "200":
+          description: Social trading wallet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialTradingWallet"
+
+  /trades/{tradeId}/release:
+    post:
+      operationId: releaseTradeFunds
+      tags: [trades]
+      summary: Release completed trade funds to main wallet
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Release result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResult"
+
+  /managers:
+    get:
+      operationId: getManagers
+      tags: [managers]
+      summary: Get list of account managers
+      responses:
+        "200":
+          description: List of managers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AccountManager"
+
+  /managers/selected:
+    get:
+      operationId: getSelectedManager
+      tags: [managers]
+      summary: Get user's selected account manager
+      responses:
+        "200":
+          description: Selected manager or null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelectedManagerResponse"
+    post:
+      operationId: selectManager
+      tags: [managers]
+      summary: Select an account manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelectManagerRequest"
+      responses:
+        "200":
+          description: Selection result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResult"
+
+  /messages:
+    get:
+      operationId: getMessages
+      tags: [messages]
+      summary: Get messages with manager or in P2P context
+      parameters:
+        - name: context
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [manager, p2p, support]
+        - name: contextId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "200":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /p2p/listings:
+    get:
+      operationId: getP2PListings
+      tags: [p2p]
+      summary: Get P2P marketplace listings
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [buy, sell]
+        - name: asset
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of P2P listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/P2PListing"
+    post:
+      operationId: createP2PListing
+      tags: [p2p]
+      summary: Create a new P2P listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateP2PListingRequest"
+      responses:
+        "200":
+          description: Created listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/P2PListing"
+
+  /p2p/orders:
+    get:
+      operationId: getP2POrders
+      tags: [p2p]
+      summary: Get user's P2P orders
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/P2POrder"
+    post:
+      operationId: createP2POrder
+      tags: [p2p]
+      summary: Create a P2P order (initiate trade)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateP2POrderRequest"
+      responses:
+        "200":
+          description: Created order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/P2POrder"
+
+  /p2p/notifications:
+    get:
+      operationId: getP2PNotifications
+      tags: [p2p]
+      summary: Get P2P admin notifications
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/P2PNotification"
+
+  /assets/catalog:
+    get:
+      operationId: getAssetCatalog
+      tags: [assets]
+      summary: Get available assets to purchase
+      responses:
+        "200":
+          description: Asset catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetCatalogItem"
+
+  /assets/purchase:
+    post:
+      operationId: purchaseAsset
+      tags: [assets]
+      summary: Purchase an asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseAssetRequest"
+      responses:
+        "200":
+          description: Purchase result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseResult"
+
+  /support/tickets:
+    get:
+      operationId: getSupportTickets
+      tags: [support]
+      summary: Get user support tickets
+      responses:
+        "200":
+          description: List of support tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupportTicket"
+    post:
+      operationId: createSupportTicket
+      tags: [support]
+      summary: Create a support ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupportTicketRequest"
+      responses:
+        "200":
+          description: Created ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportTicket"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        country:
+          type: string
+        kycVerified:
+          type: boolean
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+        selectedManagerId:
+          type: string
+          nullable: true
+      required: [id, username, email, fullName, country, kycVerified, createdAt]
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [main, trading, social]
+        label:
+          type: string
+        currency:
+          type: string
+        balance:
+          type: number
+        pendingBalance:
+          type: number
+        address:
+          type: string
+      required: [id, type, label, currency, balance, pendingBalance, address]
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        walletId:
+          type: string
+        type:
+          type: string
+          enum: [deposit, withdrawal, trade_profit, p2p_buy, p2p_sell, transfer]
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        description:
+          type: string
+        createdAt:
+          type: string
+      required: [id, walletId, type, amount, currency, status, description, createdAt]
+
+    ConnectWalletRequest:
+      type: object
+      properties:
+        method:
+          type: string
+          enum: [seed_phrase, private_key]
+        value:
+          type: string
+        walletType:
+          type: string
+          enum: [metamask, trust, custom]
+      required: [method, value, walletType]
+
+    ConnectedWallet:
+      type: object
+      properties:
+        id:
+          type: string
+        address:
+          type: string
+        walletType:
+          type: string
+        balance:
+          type: number
+        currency:
+          type: string
+        connectedAt:
+          type: string
+      required: [id, address, walletType, balance, currency, connectedAt]
+
+    Trade:
+      type: object
+      properties:
+        id:
+          type: string
+        pair:
+          type: string
+        type:
+          type: string
+          enum: [long, short]
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        entryPrice:
+          type: number
+        currentPrice:
+          type: number
+        targetPrice:
+          type: number
+        amount:
+          type: number
+        currency:
+          type: string
+        profit:
+          type: number
+        expectedProfit:
+          type: number
+        managerId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        completedAt:
+          type: string
+          nullable: true
+      required: [id, pair, type, status, entryPrice, currentPrice, targetPrice, amount, currency, profit, expectedProfit, createdAt]
+
+    SocialTradingWallet:
+      type: object
+      properties:
+        totalProfits:
+          type: number
+        pendingProfits:
+          type: number
+        currency:
+          type: string
+        locked:
+          type: boolean
+        activeTrades:
+          type: integer
+      required: [totalProfits, pendingProfits, currency, locked, activeTrades]
+
+    ActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success, message]
+
+    AccountManager:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        title:
+          type: string
+        experience:
+          type: integer
+        strategy:
+          type: string
+        performance:
+          type: number
+        totalClients:
+          type: integer
+        winRate:
+          type: number
+        specialization:
+          type: string
+        bio:
+          type: string
+        contactEmail:
+          type: string
+        available:
+          type: boolean
+      required: [id, name, title, experience, strategy, performance, totalClients, winRate, specialization, bio, contactEmail, available]
+
+    SelectedManagerResponse:
+      type: object
+      properties:
+        manager:
+          $ref: "#/components/schemas/AccountManager"
+          nullable: true
+      required: [manager]
+
+    SelectManagerRequest:
+      type: object
+      properties:
+        managerId:
+          type: string
+      required: [managerId]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        senderId:
+          type: string
+        senderName:
+          type: string
+        senderAvatar:
+          type: string
+          nullable: true
+        content:
+          type: string
+        context:
+          type: string
+          enum: [manager, p2p, support]
+        contextId:
+          type: string
+          nullable: true
+        isFromUser:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, senderId, senderName, content, context, isFromUser, createdAt]
+
+    SendMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        context:
+          type: string
+          enum: [manager, p2p, support]
+        contextId:
+          type: string
+          nullable: true
+      required: [content, context]
+
+    P2PListing:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: string
+        userAvatarUrl:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [buy, sell]
+        asset:
+          type: string
+        amount:
+          type: number
+        price:
+          type: number
+        currency:
+          type: string
+        minOrder:
+          type: number
+        maxOrder:
+          type: number
+        paymentMethods:
+          type: array
+          items:
+            type: string
+        completionRate:
+          type: number
+        totalTrades:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive, completed]
+        createdAt:
+          type: string
+      required: [id, userId, userName, type, asset, amount, price, currency, minOrder, maxOrder, paymentMethods, completionRate, totalTrades, status, createdAt]
+
+    CreateP2PListingRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [buy, sell]
+        asset:
+          type: string
+        amount:
+          type: number
+        price:
+          type: number
+        currency:
+          type: string
+        minOrder:
+          type: number
+        maxOrder:
+          type: number
+        paymentMethods:
+          type: array
+          items:
+            type: string
+      required: [type, asset, amount, price, currency, minOrder, maxOrder, paymentMethods]
+
+    P2POrder:
+      type: object
+      properties:
+        id:
+          type: string
+        listingId:
+          type: string
+        buyerId:
+          type: string
+        sellerId:
+          type: string
+        asset:
+          type: string
+        amount:
+          type: number
+        price:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, payment_sent, completed, disputed, cancelled]
+        createdAt:
+          type: string
+      required: [id, listingId, buyerId, sellerId, asset, amount, price, currency, status, createdAt]
+
+    CreateP2POrderRequest:
+      type: object
+      properties:
+        listingId:
+          type: string
+        amount:
+          type: number
+      required: [listingId, amount]
+
+    P2PNotification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [deposit_incoming, deposit_confirmed, order_update, admin_message]
+        title:
+          type: string
+        message:
+          type: string
+        orderId:
+          type: string
+          nullable: true
+        read:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, type, title, message, read, createdAt]
+
+    AssetCatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+        symbol:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        change24h:
+          type: number
+        logoUrl:
+          type: string
+          nullable: true
+        available:
+          type: boolean
+      required: [id, symbol, name, price, currency, change24h, available]
+
+    PurchaseAssetRequest:
+      type: object
+      properties:
+        assetId:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [main_wallet, card, bank_transfer]
+      required: [assetId, amount, paymentMethod]
+
+    PurchaseResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transactionId:
+          type: string
+        assetSymbol:
+          type: string
+        amountPurchased:
+          type: number
+        totalCost:
+          type: number
+        message:
+          type: string
+      required: [success, transactionId, assetSymbol, amountPurchased, totalCost, message]
+
+    SupportTicket:
+      type: object
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, subject, status, priority, messages, createdAt, updatedAt]
+
+    CreateSupportTicketRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+      required: [subject, message, priority]
