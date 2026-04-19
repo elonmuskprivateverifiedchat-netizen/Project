@@ -43,7 +43,7 @@ export default function SupportChat({ onClose, embedded, ticketId, context = "su
           <HeadphonesIcon size={16} className="text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">EXPRESSPRO101 Support</p>
+          <p className="text-sm font-semibold text-foreground">XpressProFX Support</p>
           <div className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs text-muted-foreground">Online</span>

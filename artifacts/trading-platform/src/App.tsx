@@ -1,5 +1,6 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/Layout";
@@ -19,7 +20,6 @@ import Admin from "@/pages/Admin";
 import Programs from "@/pages/Programs";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
-import AdminLogin from "@/pages/auth/AdminLogin";
 import SecuritySetup from "@/pages/auth/SecuritySetup";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import Settings from "@/pages/Settings";
@@ -41,7 +41,6 @@ function Router() {
       <Route path="/auth/register" component={Register} />
       <Route path="/auth/security-setup" component={SecuritySetup} />
       <Route path="/auth/forgot-password" component={ForgotPassword} />
-      <Route path="/auth/admin" component={AdminLogin} />
       <Route path="/c-panel" component={Admin} />
 
       <Route>
@@ -49,6 +48,7 @@ function Router() {
           <Layout>
             <Switch>
               <Route path="/" component={Dashboard} />
+              <Route path="/dashboard" component={Dashboard} />
               <Route path="/trading" component={Trading} />
               <Route path="/managers" component={Managers} />
               <Route path="/p2p" component={P2P} />
@@ -71,8 +71,10 @@ function Router() {
   );
 }
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
 function App() {
-  return (
+  const inner = (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
@@ -81,6 +83,12 @@ function App() {
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
+  );
+
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || "PLACEHOLDER_NO_GOOGLE"}>
+      {inner}
+    </GoogleOAuthProvider>
   );
 }
 

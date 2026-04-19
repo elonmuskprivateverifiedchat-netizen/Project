@@ -1,6 +1,6 @@
-const TOKEN_KEY = "expresspro_token";
-const USER_ID_KEY = "expresspro_user_id";
-const USER_ROLE_KEY = "expresspro_role";
+const TOKEN_KEY = "xpfx_token";
+const USER_ID_KEY = "xpfx_user_id";
+const USER_ROLE_KEY = "xpfx_role";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -24,8 +24,9 @@ export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(USER_ROLE_KEY);
+  sessionStorage.removeItem("xpfx_is_admin");
 }
 
 export function isAuthenticated(): boolean {
-  return !!getToken() || !!getUserId();
+  return !!getToken();
 }

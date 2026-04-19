@@ -11,10 +11,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   };
 
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (path.startsWith("/admin")) {
-    const adminCode = window.sessionStorage.getItem("expresspro101_admin_code");
-    if (adminCode) headers["x-admin-key"] = adminCode;
-  }
+  // Admin routes — token already contains admin flag in DB session
+  void path; // token-based auth handles admin access
 
   const res = await fetch(`${BASE}/api${path}`, {
     headers,

@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { sessions } from "../routes/auth";
+import { db } from "@workspace/db";
+import { userSessionsTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 
 declare global {
   namespace Express {
@@ -10,27 +12,31 @@ declare global {
   }
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization?.replace("Bearer ", "");
   if (!token) {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
 
-  const session = sessions.get(token);
-  if (!session) {
-    res.status(401).json({ error: "Invalid or expired session" });
-    return;
-  }
+  try {
+    const [session] = await db.select().from(userSessionsTable).where(eq(userSessionsTable.id, token));
 
-  if (Date.now() - session.createdAt > 60 * 60 * 1000) {
-    sessions.delete(token);
-    res.status(401).json({ error: "Session expired" });
-    return;
-  }
+    if (!session) {
+      res.status(401).json({ error: "Invalid or expired session" });
+      return;
+    }
 
-  session.createdAt = Date.now();
-  req.userId = session.userId;
-  req.isAdmin = session.isAdmin || false;
-  next();
+    if (new Date() > session.expiresAt) {
+      await db.delete(userSessionsTable).where(eq(userSessionsTable.id, token));
+      res.status(401).json({ error: "Session expired. Please sign in again." });
+      return;
+    }
+
+    req.userId = session.userId;
+    req.isAdmin = session.isAdmin;
+    next();
+  } catch (err) {
+    res.status(500).json({ error: "Session validation failed" });
+  }
 }

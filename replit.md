@@ -1,4 +1,4 @@
-# XpressProFX / ExpressPro101 — Full-Stack Forex Trading Platform
+# XpressProFX — Professional Forex Trading Platform
 
 ## Project Overview
 A comprehensive forex trading and investment broker platform with wallet connectivity, admin control panel, referral system, KYC gating, IP-based demo accounts, and live trading charts.
@@ -6,106 +6,94 @@ A comprehensive forex trading and investment broker platform with wallet connect
 ## Architecture
 
 ### Monorepo (pnpm workspaces)
-- `artifacts/trading-platform/` — React + Vite frontend (ShadCN UI, TanStack Query, Wouter routing)
-- `artifacts/api-server/` — Express.js REST API with Fastify-style logging (pino)
+- `artifacts/trading-platform/` — React + Vite frontend (ShadCN UI, TanStack Query, Wouter routing, @react-oauth/google)
+- `artifacts/api-server/` — Express.js REST API with pino logging
 - `lib/db/` — Drizzle ORM + PostgreSQL schema
 
 ### Key Technologies
 - **Frontend**: React 18, Vite, ShadCN UI, TanStack Query, Wouter, TypeScript
-- **Backend**: Express.js, Drizzle ORM, PostgreSQL, crypto (Node built-in)
-- **Auth**: Session-based (in-memory Map) with seed phrase / private key login system
+- **Backend**: Express.js, Drizzle ORM, PostgreSQL, nodemailer, crypto
+- **Auth**: DB-backed persistent sessions via `user_sessions` table (no in-memory state)
 
 ## Admin C-Panel Access
 
 | Credential | Value |
 |---|---|
 | Email | `admin@admin.com` |
-| Seed Phrase (12-word) | `admin@admin.com` × 12 |
-| Seed Phrase (24-word) | `admin@admin.com` × 24 |
 | Private Key | `8157257198001` |
 | Login Code | `999777` |
+| Head Admin Email | trevionjamielynn800@gmail.com |
 
-Admin login URL: `/auth/admin`
+Admin login: Toggle hidden on Login page (small · button) → enter master creds + admin rep email → 4-digit OTP via email → `/c-panel`
+
+**Credentials are obfuscated in source via base64** (see `auth.ts` `_creds` / `_headParts`).
+
+## Session Storage Keys (Frontend)
+- `xpfx_token` — session token
+- `xpfx_user_id` — user ID
+- `xpfx_role` — user role
+- `xpfx_is_admin` — admin flag (sessionStorage)
 
 ## Key Features
+
+### Authentication
+- Unified login page with hidden admin toggle (single dot button at bottom)
+- User login: email + seed phrase/wallet key + PIN
+- Admin 2FA: master creds → admin rep email → 4-digit OTP (30-min expiry, rotates on each request)
+- IP-based demo accounts (one per IP, persist across restarts)
+- DB-backed sessions — login persists through server restarts
 
 ### Wallet Connect
 - Import via seed phrase (12 or 24 words), private key, or wallet address
 - Supports up to 5 connected wallets per user
-- Connected wallets stored in `connected_wallets` table with importMethod (seed_phrase/private_key/address)
+- Connected wallets stored in `connected_wallets` table
 
 ### Referral System
 - Each user gets a unique referral code (format: `XPF` + 8 hex chars)
 - $500 USDC jackpot paid to referrer when their referee completes first trade
-- 3 months validity for new users, 1 month for returning users
-- Referral code field on registration form
-- Referral widget on Dashboard showing earnings + copyable code
+- Tracked in `referral_bonuses` table
 
-### IP-Based Demo Accounts
-- `GET /api/auth/demo` — creates or retrieves a demo account based on client IP
-- Each IP gets a unique demo account with $10,000+ USDC seeded balances
-- Demo accounts have realistic sample transactions pre-loaded
-- "Try Demo Account (Auto-Login)" button on Login page
+### Google OAuth (Registration Auto-fill)
+- Add `VITE_GOOGLE_CLIENT_ID` env var to enable
+- Button appears on registration Step 1 to auto-fill name and email from Google account
+- No Google OAuth for login — only registration form pre-fill
 
-### KYC System
-- Users submit documents via the KYC page
-- Admin reviews in Admin C-Panel → KYC tab
-- Status: unverified → pending → verified / rejected
+### Admin Rep Management
+- Head admin can add/remove admin representatives via `/c-panel`
+- Admin reps can access the C-Panel and manage users
+- Only head admin can add/remove other admins
 
-### Admin Trading Chart Controls
-- Live BTC/USDT chart with real-time simulation (updates every 2 seconds)
-- Admin can override trade values (price override, force win/loss, set prediction)
-- Balance adjustment panel to credit/debit any user's main wallet
-- All actions trigger in-app notifications to the affected user
+### Email Service
+- Uses nodemailer for OTP and notification emails
+- Set `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` env vars for production SMTP
+- Falls back to Ethereal test SMTP in dev (logs preview URL to console)
+
+## Database Tables (Drizzle + PostgreSQL)
+- `users` — user accounts
+- `user_sessions` — persistent login sessions (replaces in-memory Map)
+- `admin_reps` — approved admin representative emails (with UUID for session linking)
+- `admin_otp` — 4-digit OTPs for admin 2FA (30-min expiry)
+- `wallets` — main, trading, social wallets per user
+- `connected_wallets` — imported external wallets
+- `transactions` — deposit/withdrawal/trade records
+- `trades` — individual trade positions
+- `kyc_documents` — KYC submission data
+- `notifications` — in-app notifications
+- `card_requests` — debit card requests
+- `bank_accounts` — linked bank accounts
+- `p2p_chat` — P2P trading chat messages
+- `referral_bonuses` — referral reward tracking
+- `otp_codes` — email verification OTPs
 
 ## API Routes
+All routes under `/api`:
+- `GET /api/health` — health check (public)
+- `/api/auth/*` — authentication (public): register, login, demo, admin-step1, admin-step2, admin-reps
+- All other routes require Bearer token from session
 
-### Auth (`/api/auth`)
-- `POST /register` — register with optional referral code
-- `POST /login` — seed phrase / private key login
-- `POST /admin-login` — admin-specific login with login code
-- `GET /demo` — IP-based demo account creation/retrieval
-- `POST /verify-otp`, `POST /resend-otp` — email verification
-- `POST /change-password` — authenticated password change
-
-### Admin (`/api/admin`)
-- `GET /stats` — platform statistics
-- `GET /users` — all users with KYC status
-- `PATCH /users/:id/kyc` — update user KYC status
-- `PATCH /users/:id/role` — change user role
-- `PATCH /users/:id/balance` — adjust user's main wallet balance
-- `GET /kyc-documents` — all submitted KYC docs
-- `PATCH /kyc-documents/:id` — approve/reject a KYC document
-- `GET /transactions` — all transactions
-- `PATCH /transactions/:id/withdrawal` — approve/reject withdrawal
-- `GET /cards` — all card requests
-- `PATCH /cards/:id/status` — approve/decline card request
-
-### Wallets (`/api/wallets`)
-- `GET /` — all user wallets
-- `POST /connect` — import via seed_phrase, private_key, or address
-- `DELETE /:id` — remove connected wallet
-
-### Referrals (`/api/referrals`)
-- `GET /info` — user's referral code, total earned, pending bonuses
-- `POST /claim` — trigger referral bonus payout when user starts trading
-
-## Database Schema (Drizzle ORM)
-Key tables: `users`, `wallets`, `connected_wallets`, `transactions`, `notifications`, `kyc_documents`, `otp_codes`, `trades`, `p2p_listings`, `p2p_orders`, `card_requests`, `messages`, `support_tickets`, `referral_bonuses`
-
-Added fields for this build:
-- `users.referralCode`, `users.referredBy`, `users.referralValidUntil`, `users.isNewUser`
-- `connected_wallets.importMethod`, `connected_wallets.label`
-- New table: `referral_bonuses` (referrerId, referredUserId, bonusAmount, status, paidAt)
-
-## Workflows
-- `artifacts/api-server: API Server` — Express backend on port 8080
-- `artifacts/trading-platform: web` — Vite dev server
-
-## Frontend Pages
-- `/auth/login` — Main login (seed phrase + PIN)
-- `/auth/admin` — Admin C-Panel login (separate credentials)
-- `/auth/register` — Registration with referral code field
-- `/dashboard` — Dashboard with referral widget
-- `/wallet` — Wallet management with seed phrase/key import tabs
-- `/admin` — Admin control panel (requires admin session)
+## Environment Variables Needed
+- `DATABASE_URL` — PostgreSQL connection string (set automatically by Replit DB)
+- `SMTP_HOST` — SMTP server (e.g. `smtp.gmail.com`)
+- `SMTP_USER` — SMTP username/email
+- `SMTP_PASS` — SMTP password or app password
+- `VITE_GOOGLE_CLIENT_ID` — Google OAuth Client ID for registration auto-fill (optional)

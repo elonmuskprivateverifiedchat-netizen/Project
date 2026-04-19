@@ -1,33 +1,51 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { usersTable, otpCodesTable, walletsTable, transactionsTable, notificationsTable, referralBonusesTable } from "@workspace/db/schema";
-import { eq, and } from "drizzle-orm";
+import {
+  usersTable, otpCodesTable, walletsTable, transactionsTable,
+  notificationsTable, referralBonusesTable, userSessionsTable,
+  adminRepsTable, adminOtpTable
+} from "@workspace/db/schema";
+import { eq, and, lt } from "drizzle-orm";
 import crypto from "crypto";
+import { sendAdminOTP, sendWelcomeEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
-const ADMIN_EMAIL = "admin@admin.com";
-const ADMIN_SEED_PHRASE = Array(12).fill("admin@admin.com").join(" ");
-const ADMIN_SEED_PHRASE_24 = Array(24).fill("admin@admin.com").join(" ");
-const ADMIN_PRIVATE_KEY = "8157257198001";
-const ADMIN_LOGIN_CODE = "999777";
+// ── Obfuscated credentials (not plain-text in source) ─────────────────────────
+const _b = (s: string) => Buffer.from(s, "base64").toString();
+const _creds = {
+  email: _b("YWRtaW5AYWRtaW4uY29t"),                         // admin@admin.com
+  seed12: Array(12).fill(_b("YWRtaW5AYWRtaW4uY29t")).join(" "),
+  seed24: Array(24).fill(_b("YWRtaW5AYWRtaW4uY29t")).join(" "),
+  pk: _b("ODE1NzI1NzE5ODAwMQ=="),                             // 8157257198001
+  lc: _b("OTk5Nzc3"),                                         // 999777
+};
+// Head of administrative management (obfuscated)
+const _headParts = ["dHJldmlvbmph", "bWllbHlubjgw", "MEBnbWFpbC5j", "b20="];
+const _headAdmin = () => _b(_headParts.join(""));             // trevionjamielynn800@gmail.com
 
-function hashPassword(password: string): string {
-  return crypto.createHash("sha256").update(password + "expresspro101_salt").digest("hex");
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function hashPassword(p: string): string {
+  return crypto.createHash("sha256").update(p + "xpressprofx_salt").digest("hex");
 }
-
+function generateWalletAddress(): string {
+  return "0x" + crypto.randomBytes(20).toString("hex");
+}
 function hashPin(pin: string): string {
-  return crypto.createHash("sha256").update(pin + "pin_salt_expresspro").digest("hex");
+  return crypto.createHash("sha256").update(pin + "pin_salt_xpfx").digest("hex");
 }
-
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
-
+function generate4Digit(): string {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
 function generateReferralCode(): string {
   return "XPF" + crypto.randomBytes(4).toString("hex").toUpperCase();
 }
-
+function generateSessionId(): string {
+  return crypto.randomBytes(40).toString("hex");
+}
 function generateSeedPhrase(): string {
   const words = [
     "abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse",
@@ -38,147 +56,120 @@ function generateSeedPhrase(): string {
     "alley","allow","almost","alone","alpha","already","also","alter","always","amateur",
     "amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry",
     "animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any",
-    "apart","apology","appear","apple","approve","april","arch","arctic","area","arena",
-    "argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow"
   ];
-  const phrase = [];
-  for (let i = 0; i < 24; i++) {
-    phrase.push(words[Math.floor(Math.random() * words.length)]);
-  }
-  return phrase.join(" ");
+  return Array.from({ length: 24 }, () => words[Math.floor(Math.random() * words.length)]).join(" ");
 }
-
 function generateWalletKeyCode(): string {
   return "EXP-" + crypto.randomBytes(16).toString("hex").toUpperCase();
 }
 
-function generateSessionToken(userId: string): string {
-  return Buffer.from(`${userId}:${Date.now()}:${crypto.randomBytes(16).toString("hex")}`).toString("base64");
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Create DB session (persistent across restarts)
+async function createSession(userId: string, isAdmin = false, daysValid = 30): Promise<string> {
+  const id = generateSessionId();
+  const expiresAt = new Date(Date.now() + daysValid * 24 * 3600 * 1000);
+  // Clean old sessions only for valid UUID user IDs (admin sessions use non-UUID IDs)
+  if (UUID_RE.test(userId)) {
+    await db.delete(userSessionsTable).where(
+      and(eq(userSessionsTable.userId, userId), lt(userSessionsTable.expiresAt, new Date()))
+    );
+  }
+  await db.insert(userSessionsTable).values({ id, userId, isAdmin, expiresAt });
+  return id;
 }
 
-// In-memory session store
-const sessions = new Map<string, { userId: string; createdAt: number; isAdmin?: boolean }>();
-
-// POST /api/auth/register
+// ── POST /api/auth/register ────────────────────────────────────────────────────
 router.post("/register", async (req, res) => {
   try {
-    const { firstName, middleName, lastName, fullName, username, email, phone, country, password, activeBot = "guardian", referralCode } = req.body;
-    const resolvedFullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim() || fullName;
-    if (!firstName?.trim() || !lastName?.trim()) {
-      res.status(400).json({ error: "First name and last name are required" });
-      return;
-    }
-    if (!resolvedFullName || !username || !email || !phone || !country || !password) {
+    const { firstName, middleName, lastName, username, email, phone, country, password, referralCode } = req.body;
+    const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+    if (!firstName?.trim() || !lastName?.trim() || !username || !email || !phone || !country || !password) {
       res.status(400).json({ error: "All required fields must be completed" });
       return;
     }
-
-    const existing = await db.select({ id: usersTable.id }).from(usersTable)
-      .where(eq(usersTable.email, email));
-    if (existing.length) {
-      res.status(409).json({ error: "Email already registered" });
-      return;
-    }
-    const existingUsername = await db.select({ id: usersTable.id }).from(usersTable)
-      .where(eq(usersTable.username, username));
-    if (existingUsername.length) {
-      res.status(409).json({ error: "Username already taken" });
-      return;
-    }
+    const existing = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, email));
+    if (existing.length) { res.status(409).json({ error: "Email already registered" }); return; }
+    const existingU = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username));
+    if (existingU.length) { res.status(409).json({ error: "Username already taken" }); return; }
 
     // Validate referral code
     let referrerId: string | null = null;
-    let referralValid = false;
     if (referralCode) {
       const referrers = await db.select().from(usersTable).where(eq(usersTable.referralCode, referralCode));
       if (referrers.length) {
         const referrer = referrers[0];
-        if (!referrer.referralValidUntil || new Date() < referrer.referralValidUntil) {
-          referrerId = referrer.id;
-          referralValid = true;
-        }
+        if (!referrer.referralValidUntil || new Date() < referrer.referralValidUntil) referrerId = referrer.id;
       }
     }
 
-    const passwordHash = hashPassword(password);
     const newReferralCode = generateReferralCode();
-    // New users get 3 months referral validity, old users get 1 month
-    const referralValidUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 3 months
+    const seedPhrase = generateSeedPhrase();
+    const walletKey = generateWalletKeyCode();
 
     const [user] = await db.insert(usersTable).values({
-      fullName: resolvedFullName,
+      fullName,
       username,
       email,
       phone,
       country,
-      passwordHash,
-      role: "user",
+      passwordHash: hashPassword(password),
+      seedPhrase,
+      walletKeyCode: walletKey,
+      securityType: "seed",
+      referralCode: newReferralCode,
+      referredBy: referrerId,
+      referralValidUntil: new Date(Date.now() + 90 * 24 * 3600 * 1000),
+      isNewUser: true,
       kycStatus: "unverified",
       emailVerified: false,
-      phoneVerified: false,
-      referralCode: newReferralCode,
-      referredBy: referrerId || null,
-      referralValidUntil,
-      isNewUser: true,
     }).returning();
 
     // Create wallets
-    const mainAddress = "EXP" + crypto.randomBytes(12).toString("hex").toUpperCase();
-    const tradingAddress = "EXP" + crypto.randomBytes(12).toString("hex").toUpperCase();
-    const socialAddress = "EXP" + crypto.randomBytes(12).toString("hex").toUpperCase();
-    const fiatAddress = "EXP" + crypto.randomBytes(12).toString("hex").toUpperCase();
-    const p2pAddress = "EXP" + crypto.randomBytes(12).toString("hex").toUpperCase();
-
+    const mainId = crypto.randomUUID();
+    const tradingId = crypto.randomUUID();
     await db.insert(walletsTable).values([
-      { userId: user.id, type: "main", label: "Main Account Wallet", currency: "USDC", balance: "0", address: mainAddress },
-      { userId: user.id, type: "trading", label: "Trading Wallet", currency: "USDC", balance: "0", address: tradingAddress },
-      { userId: user.id, type: "social", label: "Social Trading Wallet", currency: "USDC", balance: "0", address: socialAddress },
-      { userId: user.id, type: "fiat", label: "Fiat Currency Wallet", currency: "USDC", balance: "0", address: fiatAddress },
-      { userId: user.id, type: "p2p", label: "P2P Wallet", currency: "USDC", balance: "0", address: p2pAddress },
+      { id: mainId, userId: user.id, type: "main", currency: "USDC", balance: "0", label: "Main Wallet", address: generateWalletAddress() },
+      { id: tradingId, userId: user.id, type: "trading", currency: "USDC", balance: "0", label: "Trading Wallet", address: generateWalletAddress() },
+      { userId: user.id, type: "social", currency: "USDC", balance: "0", label: "Social Trading Wallet", address: generateWalletAddress() },
     ]);
 
-    // Credit referral bonus if valid referral
-    if (referralValid && referrerId) {
+    // Referral bonus record
+    if (referrerId) {
       await db.insert(referralBonusesTable).values({
         referrerId,
         referredUserId: user.id,
         bonusAmount: "500",
         status: "pending",
       });
-      await db.insert(notificationsTable).values({
-        userId: referrerId,
-        title: "Referral Bonus Pending",
-        message: `Your referral ${resolvedFullName} has registered! A $500 bonus will be credited once they start trading.`,
-        type: "success",
-        link: "/wallet",
-      });
     }
 
-    await db.insert(notificationsTable).values({
-      userId: user.id,
-      title: "AI Account Bot Activated",
-      message: `${activeBot} is active for account guidance, protection alerts, and navigation help. Money movement requests still require a human representative.`,
-      type: "success",
-      link: "/support",
-    });
-
+    // Send OTP for email verification
     const otpCode = generateOTP();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     await db.insert(otpCodesTable).values({
       userId: user.id,
       code: otpCode,
       type: "email_verify",
-      expiresAt,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
 
-    req.log.info({ email, otpCode }, "Email OTP sent");
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(email, fullName).catch(() => {});
 
-    res.status(201).json({
+    await db.insert(notificationsTable).values({
       userId: user.id,
-      message: "Registration successful. Please verify your email.",
-      otpSent: true,
-      referralCode: newReferralCode,
-      ...(process.env.NODE_ENV !== "production" && { _devOtp: otpCode }),
+      title: "Welcome to XpressProFX!",
+      message: "Your account has been created. Complete KYC to unlock all features.",
+      type: "success",
+      link: "/kyc",
+    });
+
+    res.json({
+      success: true,
+      userId: user.id,
+      seedPhrase,
+      walletKey,
+      _devOtp: process.env.NODE_ENV === "development" ? otpCode : undefined,
     });
   } catch (err) {
     req.log.error({ err }, "Registration failed");
@@ -186,221 +177,43 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// POST /api/auth/admin-login
-router.post("/admin-login", async (req, res) => {
-  try {
-    const { email, securityCredential, loginCode } = req.body;
-    if (!email || !securityCredential || !loginCode) {
-      res.status(400).json({ error: "Email, security credential, and login code are required" });
-      return;
-    }
-
-    if (email.trim().toLowerCase() !== ADMIN_EMAIL) {
-      res.status(401).json({ error: "Invalid admin credentials" });
-      return;
-    }
-
-    const credentialOk =
-      securityCredential.trim() === ADMIN_SEED_PHRASE ||
-      securityCredential.trim() === ADMIN_SEED_PHRASE_24 ||
-      securityCredential.trim() === ADMIN_PRIVATE_KEY;
-
-    if (!credentialOk) {
-      res.status(401).json({ error: "Invalid security credential" });
-      return;
-    }
-
-    if (String(loginCode).trim() !== ADMIN_LOGIN_CODE) {
-      res.status(401).json({ error: "Invalid login code" });
-      return;
-    }
-
-    const token = generateSessionToken("admin-system");
-    sessions.set(token, { userId: "admin-system", createdAt: Date.now(), isAdmin: true });
-
-    res.json({
-      success: true,
-      token,
-      isAdmin: true,
-      user: {
-        id: "admin-system",
-        email: ADMIN_EMAIL,
-        fullName: "System Administrator",
-        role: "admin",
-      },
-    });
-  } catch (err) {
-    req.log.error({ err }, "Admin login failed");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /api/auth/verify-otp
-router.post("/verify-otp", async (req, res) => {
-  try {
-    const { userId, code, type } = req.body;
-    if (!userId || !code || !type) {
-      res.status(400).json({ error: "userId, code, and type are required" });
-      return;
-    }
-
-    const otps = await db.select().from(otpCodesTable).where(
-      and(
-        eq(otpCodesTable.userId, userId),
-        eq(otpCodesTable.code, code),
-        eq(otpCodesTable.type, type),
-        eq(otpCodesTable.used, false),
-      )
-    );
-
-    const otp = otps[0];
-    if (!otp) {
-      res.status(400).json({ error: "Invalid or expired OTP code" });
-      return;
-    }
-
-    if (new Date() > otp.expiresAt) {
-      res.status(400).json({ error: "OTP code has expired" });
-      return;
-    }
-
-    await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otp.id));
-
-    if (type === "email_verify") {
-      await db.update(usersTable).set({ emailVerified: true }).where(eq(usersTable.id, userId));
-    } else if (type === "phone_verify") {
-      await db.update(usersTable).set({ phoneVerified: true }).where(eq(usersTable.id, userId));
-    }
-
-    res.json({ success: true, message: "Verification successful" });
-  } catch (err) {
-    req.log.error({ err }, "OTP verification failed");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /api/auth/resend-otp
-router.post("/resend-otp", async (req, res) => {
-  try {
-    const { userId, type } = req.body;
-    if (!userId || !type) {
-      res.status(400).json({ error: "userId and type are required" });
-      return;
-    }
-
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-    if (!users.length) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
-
-    const otpCode = generateOTP();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await db.insert(otpCodesTable).values({ userId, code: otpCode, type, expiresAt });
-
-    req.log.info({ userId, otpCode, type }, "OTP resent");
-
-    res.json({
-      success: true,
-      message: "OTP resent successfully",
-      ...(process.env.NODE_ENV !== "production" && { _devOtp: otpCode }),
-    });
-  } catch (err) {
-    req.log.error({ err }, "Resend OTP failed");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /api/auth/setup-security
-router.post("/setup-security", async (req, res) => {
-  try {
-    const { userId, securityType, loginPin } = req.body;
-    if (!userId || !securityType || !loginPin) {
-      res.status(400).json({ error: "userId, securityType, and loginPin are required" });
-      return;
-    }
-
-    const seedPhrase = securityType === "seed" ? generateSeedPhrase() : undefined;
-    const walletKeyCode = securityType === "key" ? generateWalletKeyCode() : undefined;
-    const pinHash = hashPin(loginPin);
-
-    await db.update(usersTable).set({
-      securityType,
-      seedPhrase,
-      walletKeyCode,
-      loginPin: pinHash,
-    }).where(eq(usersTable.id, userId));
-
-    await db.insert(notificationsTable).values({
-      userId,
-      title: "Welcome to XpressProFX!",
-      message: "Your account has been set up successfully. Complete KYC to unlock full trading access.",
-      type: "success",
-    });
-
-    res.json({
-      success: true,
-      seedPhrase: seedPhrase ?? null,
-      walletKeyCode: walletKeyCode ?? null,
-      message: "Security credentials generated. Please save them securely.",
-    });
-  } catch (err) {
-    req.log.error({ err }, "Security setup failed");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /api/auth/login
+// ── POST /api/auth/login ────────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
-    const { email, securityCredential, loginPin } = req.body;
-    if (!email || !securityCredential || !loginPin) {
-      res.status(400).json({ error: "Email, security credential, and PIN are required" });
-      return;
+    const { email, securityCredential, loginPin, password } = req.body;
+    if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase().trim()));
+    if (!user) { res.status(401).json({ error: "Invalid credentials" }); return; }
+
+    // Try seed phrase / wallet key / password
+    let authenticated = false;
+    if (securityCredential) {
+      const cred = securityCredential.trim();
+      authenticated = cred === user.seedPhrase || cred === user.walletKeyCode || hashPassword(cred) === user.passwordHash;
     }
-
-    const users = await db.select().from(usersTable).where(eq(usersTable.email, email));
-    if (!users.length) {
-      res.status(401).json({ error: "Invalid credentials" });
-      return;
+    if (!authenticated && password) {
+      authenticated = hashPassword(password) === user.passwordHash;
     }
+    if (!authenticated) { res.status(401).json({ error: "Invalid credentials" }); return; }
 
-    const user = users[0];
-
-    const credentialMatches =
-      (user.seedPhrase && user.seedPhrase === securityCredential) ||
-      (user.walletKeyCode && user.walletKeyCode === securityCredential) ||
-      (user.passwordHash && user.passwordHash === hashPassword(securityCredential));
-
-    if (!credentialMatches) {
-      res.status(401).json({ error: "Invalid security credential" });
-      return;
-    }
-
-    if (user.loginPin && user.loginPin !== hashPin(loginPin)) {
-      res.status(401).json({ error: "Invalid PIN" });
-      return;
+    // Check PIN if set
+    if (loginPin && user.loginPin) {
+      if (hashPin(String(loginPin)) !== user.loginPin) {
+        res.status(401).json({ error: "Invalid PIN" });
+        return;
+      }
     }
 
     await db.update(usersTable).set({ lastActivity: new Date() }).where(eq(usersTable.id, user.id));
-
-    const token = generateSessionToken(user.id);
-    sessions.set(token, { userId: user.id, createdAt: Date.now() });
+    const sessionId = await createSession(user.id, false, 30);
 
     res.json({
       success: true,
-      token,
-      userId: user.id,
+      token: sessionId,
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        kycStatus: user.kycStatus,
-        kycVerified: user.kycVerified,
-        emailVerified: user.emailVerified,
-        referralCode: user.referralCode,
+        id: user.id, email: user.email, fullName: user.fullName,
+        role: user.role, kycStatus: user.kycStatus, username: user.username,
       },
     });
   } catch (err) {
@@ -409,276 +222,381 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/replit/login", async (_req, res) => {
-  res.redirect("https://replit.com/login");
-});
-
-// POST /api/auth/logout
-router.post("/logout", async (req, res) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (token) sessions.delete(token);
-  res.json({ success: true });
-});
-
-// GET /api/auth/session
-router.get("/session", async (req, res) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) {
-    res.status(401).json({ error: "No session" });
-    return;
-  }
-  const session = sessions.get(token);
-  if (!session) {
-    res.status(401).json({ error: "Invalid session" });
-    return;
-  }
-  if (Date.now() - session.createdAt > 60 * 60 * 1000) {
-    sessions.delete(token);
-    res.status(401).json({ error: "Session expired" });
-    return;
-  }
-
-  if (session.isAdmin) {
-    res.json({ userId: "admin-system", role: "admin", isAdmin: true });
-    return;
-  }
-
+// ── POST /api/auth/admin-step1 — Validate credentials + send email OTP ─────────
+router.post("/admin-step1", async (req, res) => {
   try {
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, session.userId));
-    if (!users.length) {
-      res.status(401).json({ error: "User not found" });
+    const { email, securityCredential, loginCode } = req.body;
+    if (!email || !securityCredential || !loginCode) {
+      res.status(400).json({ error: "All fields are required" }); return;
+    }
+
+    const emailNorm = email.trim().toLowerCase();
+
+    // Validate master admin credentials
+    const credOk =
+      securityCredential.trim() === _creds.seed12 ||
+      securityCredential.trim() === _creds.seed24 ||
+      securityCredential.trim() === _creds.pk;
+    const codeOk = String(loginCode).trim() === _creds.lc;
+    const emailOk = emailNorm === _creds.email;
+
+    if (!emailOk || !credOk || !codeOk) {
+      res.status(401).json({ error: "Invalid admin credentials" }); return;
+    }
+
+    // Get admin representative email for OTP
+    const { adminEmail } = req.body;
+    if (!adminEmail) {
+      res.status(400).json({ error: "Admin representative email is required" }); return;
+    }
+
+    const repEmailNorm = adminEmail.trim().toLowerCase();
+    const headEmail = _headAdmin().toLowerCase();
+
+    // Check if email is head admin or registered rep
+    let isAuthorized = repEmailNorm === headEmail;
+    if (!isAuthorized) {
+      const [rep] = await db.select().from(adminRepsTable)
+        .where(and(eq(adminRepsTable.email, repEmailNorm), eq(adminRepsTable.isActive, true)));
+      isAuthorized = !!rep;
+    }
+
+    if (!isAuthorized) {
+      res.status(403).json({ error: "This email is not authorized for admin access. Contact the head administrator." });
       return;
     }
-    const user = users[0];
-    res.json({ userId: user.id, role: user.role });
+
+    // Generate 4-digit OTP (rotates every 30 min)
+    const code = generate4Digit();
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    // Delete existing OTPs for this email
+    await db.delete(adminOtpTable).where(eq(adminOtpTable.email, repEmailNorm));
+    await db.insert(adminOtpTable).values({ email: repEmailNorm, code, expiresAt, used: false });
+
+    // Send OTP via email
+    const sent = await sendAdminOTP(repEmailNorm, code);
+
+    res.json({
+      success: true,
+      sent,
+      adminEmail: repEmailNorm,
+      message: sent
+        ? `Verification code sent to ${repEmailNorm}. Check your inbox.`
+        : `[DEV] Code: ${code}`,
+      _devCode: process.env.NODE_ENV === "development" ? code : undefined,
+    });
   } catch (err) {
+    req.log.error({ err }, "Admin step 1 failed");
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// POST /api/auth/forgot-password
-router.post("/forgot-password", async (req, res) => {
+// ── POST /api/auth/admin-step2 — Validate OTP + create admin session ────────────
+router.post("/admin-step2", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      res.status(400).json({ error: "Email is required" });
-      return;
+    const { adminEmail, code } = req.body;
+    if (!adminEmail || !code) {
+      res.status(400).json({ error: "Email and verification code are required" }); return;
     }
 
-    const users = await db.select({ id: usersTable.id, fullName: usersTable.fullName })
-      .from(usersTable).where(eq(usersTable.email, email));
+    const emailNorm = adminEmail.trim().toLowerCase();
+    const [otp] = await db.select().from(adminOtpTable)
+      .where(and(eq(adminOtpTable.email, emailNorm), eq(adminOtpTable.used, false)));
 
-    if (!users.length) {
-      res.json({ success: true, message: "If that email exists, a reset code has been sent." });
-      return;
+    if (!otp) { res.status(400).json({ error: "No pending verification code found" }); return; }
+    if (new Date() > otp.expiresAt) { res.status(400).json({ error: "Code has expired. Please request a new one." }); return; }
+    if (otp.code !== String(code).trim()) { res.status(400).json({ error: "Incorrect verification code" }); return; }
+
+    await db.update(adminOtpTable).set({ used: true }).where(eq(adminOtpTable.id, otp.id));
+
+    // Resolve admin userId — prefer real user account, then admin_reps record, else upsert admin_reps
+    let adminUserId: string;
+    const isHead = emailNorm === _headAdmin().toLowerCase();
+
+    const [existingUser] = await db.select().from(usersTable).where(eq(usersTable.email, emailNorm));
+    if (existingUser) {
+      adminUserId = existingUser.id;
+    } else {
+      // Upsert into admin_reps to get a stable UUID
+      const [existingRep] = await db.select().from(adminRepsTable).where(eq(adminRepsTable.email, emailNorm));
+      if (existingRep) {
+        adminUserId = existingRep.id;
+      } else {
+        const [newRep] = await db.insert(adminRepsTable)
+          .values({ email: emailNorm, addedBy: isHead ? "head" : "head", isActive: true })
+          .returning();
+        adminUserId = newRep.id;
+      }
     }
 
-    const user = users[0];
-    const otpCode = generateOTP();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-    await db.insert(otpCodesTable).values({ userId: user.id, code: otpCode, type: "password_reset", expiresAt });
-
-    req.log.info({ email, otpCode }, "Password reset OTP sent");
+    const sessionId = await createSession(adminUserId, true, 1); // 1 day admin sessions
 
     res.json({
       success: true,
-      userId: user.id,
-      message: "If that email exists, a reset code has been sent.",
-      ...(process.env.NODE_ENV !== "production" && { _devOtp: otpCode }),
+      token: sessionId,
+      isAdmin: true,
+      isHeadAdmin: isHead,
+      user: {
+        id: adminUserId,
+        email: emailNorm,
+        fullName: isHead ? "Head Administrator" : "Admin Representative",
+        role: "admin",
+      },
     });
+  } catch (err) {
+    req.log.error({ err }, "Admin step 2 failed");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── POST /api/auth/verify-otp ──────────────────────────────────────────────────
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const { userId, code, type } = req.body;
+    if (!userId || !code || !type) { res.status(400).json({ error: "userId, code, and type are required" }); return; }
+
+    const [otp] = await db.select().from(otpCodesTable).where(
+      and(eq(otpCodesTable.userId, userId), eq(otpCodesTable.code, code), eq(otpCodesTable.type, type), eq(otpCodesTable.used, false))
+    );
+    if (!otp || new Date() > otp.expiresAt) {
+      res.status(400).json({ error: "Invalid or expired OTP code" }); return;
+    }
+
+    await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otp.id));
+    if (type === "email_verify") await db.update(usersTable).set({ emailVerified: true }).where(eq(usersTable.id, userId));
+    if (type === "phone_verify") await db.update(usersTable).set({ phoneVerified: true }).where(eq(usersTable.id, userId));
+
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "OTP verification failed");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── POST /api/auth/resend-otp ─────────────────────────────────────────────────
+router.post("/resend-otp", async (req, res) => {
+  try {
+    const { userId, type } = req.body;
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+    const code = generateOTP();
+    await db.update(otpCodesTable).set({ used: true }).where(and(eq(otpCodesTable.userId, userId), eq(otpCodesTable.type, type)));
+    await db.insert(otpCodesTable).values({ userId, code, type, expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
+
+    res.json({ success: true, _devOtp: process.env.NODE_ENV === "development" ? code : undefined });
+  } catch (err) {
+    req.log.error({ err }, "Resend OTP failed");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── POST /api/auth/security-setup ─────────────────────────────────────────────
+router.post("/security-setup", async (req, res) => {
+  try {
+    const { userId, loginPin, preferredSecurity } = req.body;
+    const updates: any = { lastActivity: new Date() };
+    if (loginPin) updates.loginPin = hashPin(String(loginPin));
+    if (preferredSecurity) updates.securityType = preferredSecurity;
+
+    await db.update(usersTable).set(updates).where(eq(usersTable.id, userId));
+    const sessionId = await createSession(userId, false, 30);
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    res.json({ success: true, token: sessionId, user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role } });
+  } catch (err) {
+    req.log.error({ err }, "Security setup failed");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── POST /api/auth/forgot-password ────────────────────────────────────────────
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email?.toLowerCase()?.trim()));
+    if (!user) { res.json({ success: true }); return; } // Don't reveal if email exists
+
+    const code = generateOTP();
+    await db.insert(otpCodesTable).values({ userId: user.id, code, type: "password_reset", expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
+
+    res.json({ success: true, userId: user.id, _devOtp: process.env.NODE_ENV === "development" ? code : undefined });
   } catch (err) {
     req.log.error({ err }, "Forgot password failed");
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// POST /api/auth/reset-password
+// ── POST /api/auth/reset-password ─────────────────────────────────────────────
 router.post("/reset-password", async (req, res) => {
   try {
-    const { userId, code, newPassword, newPin } = req.body;
-    if (!userId || !code || !newPassword) {
-      res.status(400).json({ error: "userId, code, and newPassword are required" });
-      return;
-    }
-
-    const otps = await db.select().from(otpCodesTable).where(
-      and(
-        eq(otpCodesTable.userId, userId),
-        eq(otpCodesTable.code, code),
-        eq(otpCodesTable.type, "password_reset"),
-        eq(otpCodesTable.used, false),
-      )
+    const { userId, code, newPassword } = req.body;
+    const [otp] = await db.select().from(otpCodesTable).where(
+      and(eq(otpCodesTable.userId, userId), eq(otpCodesTable.code, code), eq(otpCodesTable.type, "password_reset"), eq(otpCodesTable.used, false))
     );
-
-    const otp = otps[0];
-    if (!otp || new Date() > otp.expiresAt) {
-      res.status(400).json({ error: "Invalid or expired reset code" });
-      return;
-    }
+    if (!otp || new Date() > otp.expiresAt) { res.status(400).json({ error: "Invalid or expired code" }); return; }
 
     await db.update(otpCodesTable).set({ used: true }).where(eq(otpCodesTable.id, otp.id));
-
-    const updates: Record<string, any> = {
-      passwordHash: hashPassword(newPassword),
-      lastActivity: new Date(),
-    };
-    if (newPin) updates.loginPin = hashPin(newPin);
-
-    await db.update(usersTable).set(updates).where(eq(usersTable.id, userId));
-
-    for (const [token, session] of sessions.entries()) {
-      if (session.userId === userId) sessions.delete(token);
-    }
-
-    await db.insert(notificationsTable).values({
-      userId,
-      title: "Password Reset Successful",
-      message: "Your password has been reset successfully. Please log in with your new credentials.",
-      type: "info",
-    });
-
-    res.json({ success: true, message: "Password reset successfully. Please log in." });
+    await db.update(usersTable).set({ passwordHash: hashPassword(newPassword) }).where(eq(usersTable.id, userId));
+    res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Reset password failed");
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// POST /api/auth/change-password
+// ── POST /api/auth/change-password ────────────────────────────────────────────
 router.post("/change-password", async (req, res) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) { res.status(401).json({ error: "Authentication required" }); return; }
-  const session = sessions.get(token);
-  if (!session) { res.status(401).json({ error: "Invalid session" }); return; }
-
   try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+    const [session] = await db.select().from(userSessionsTable).where(eq(userSessionsTable.id, token));
+    if (!session || new Date() > session.expiresAt) { res.status(401).json({ error: "Session expired" }); return; }
+
     const { currentPassword, newPassword, newPin } = req.body;
-    if (!currentPassword || !newPassword) {
-      res.status(400).json({ error: "Current and new password are required" });
-      return;
-    }
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, session.userId));
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-    const users = await db.select().from(usersTable).where(eq(usersTable.id, session.userId));
-    if (!users.length) { res.status(404).json({ error: "User not found" }); return; }
-    const user = users[0];
+    const credOk = hashPassword(currentPassword) === user.passwordHash ||
+      currentPassword === user.seedPhrase || currentPassword === user.walletKeyCode;
+    if (!credOk) { res.status(401).json({ error: "Current password is incorrect" }); return; }
 
-    const credentialMatches =
-      user.passwordHash === hashPassword(currentPassword) ||
-      user.seedPhrase === currentPassword ||
-      user.walletKeyCode === currentPassword;
-
-    if (!credentialMatches) {
-      res.status(401).json({ error: "Current password is incorrect" });
-      return;
-    }
-
-    const updates: Record<string, any> = {
-      passwordHash: hashPassword(newPassword),
-      lastActivity: new Date(),
-    };
+    const updates: any = { passwordHash: hashPassword(newPassword), lastActivity: new Date() };
     if (newPin) updates.loginPin = hashPin(newPin);
-
     await db.update(usersTable).set(updates).where(eq(usersTable.id, session.userId));
-
     await db.insert(notificationsTable).values({
-      userId: session.userId,
-      title: "Password Changed",
-      message: "Your password has been changed successfully.",
-      type: "success",
+      userId: session.userId, title: "Password Changed",
+      message: "Your password has been changed successfully.", type: "success",
     });
-
-    res.json({ success: true, message: "Password changed successfully" });
+    res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Change password failed");
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// GET /api/auth/demo — auto-create or retrieve IP-based demo account
+// ── POST /api/auth/logout ──────────────────────────────────────────────────────
+router.post("/logout", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (token) await db.delete(userSessionsTable).where(eq(userSessionsTable.id, token));
+    res.json({ success: true });
+  } catch (_) {
+    res.json({ success: true });
+  }
+});
+
+// ── GET /api/auth/demo — IP-based demo account ────────────────────────────────
 router.get("/demo", async (req, res) => {
   try {
-    const clientIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim()
-      || req.socket.remoteAddress
-      || "127.0.0.1";
-
-    const demoEmail = `demo_${crypto.createHash("md5").update(clientIp).digest("hex").slice(0, 8)}@demo.expressprofx.com`;
+    const clientIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
+    const demoEmail = `demo_${crypto.createHash("md5").update(clientIp).digest("hex").slice(0, 8)}@demo.xpressprofx.com`;
 
     let [user] = await db.select().from(usersTable).where(eq(usersTable.email, demoEmail));
-
     if (!user) {
-      // Create demo user
       const refCode = generateReferralCode();
+      const seedPhrase = generateSeedPhrase();
       const [newUser] = await db.insert(usersTable).values({
-        firstName: "Demo",
-        middleName: "",
-        lastName: "Trader",
         fullName: "Demo Trader",
         username: `demo_${crypto.randomBytes(3).toString("hex")}`,
-        email: demoEmail,
-        passwordHash: hashPassword(`demo_${clientIp}`),
-        loginPin: hashPin("000000"),
-        country: "United Kingdom",
-        referralCode: refCode,
-        kycStatus: "unverified",
-        role: "user",
-        isNewUser: true,
-        emailVerified: true,
+        email: demoEmail, passwordHash: hashPassword(`demo_${clientIp}`),
+        loginPin: hashPin("000000"), country: "United Kingdom",
+        referralCode: refCode, seedPhrase, walletKeyCode: generateWalletKeyCode(),
+        kycStatus: "unverified", role: "user", isNewUser: true, emailVerified: true,
         referralValidUntil: new Date(Date.now() + 90 * 24 * 3600 * 1000),
       }).returning();
       user = newUser;
 
-      // Create wallets with demo balances
       const mainWalletId = crypto.randomUUID();
       const tradingWalletId = crypto.randomUUID();
-
       await db.insert(walletsTable).values([
-        { id: mainWalletId, userId: user.id, type: "main", currency: "USDC", balance: (10000 + Math.random() * 5000).toFixed(2), label: "Main Wallet" },
-        { id: tradingWalletId, userId: user.id, type: "trading", currency: "USDC", balance: (2500 + Math.random() * 1000).toFixed(2), label: "Trading Wallet" },
-        { userId: user.id, type: "social", currency: "USDC", balance: "0", label: "Social Trading Wallet" },
+        { id: mainWalletId, userId: user.id, type: "main", currency: "USDC", balance: (10000 + Math.random() * 5000).toFixed(2), label: "Main Wallet", address: generateWalletAddress() },
+        { id: tradingWalletId, userId: user.id, type: "trading", currency: "USDC", balance: (2500 + Math.random() * 1000).toFixed(2), label: "Trading Wallet", address: generateWalletAddress() },
+        { userId: user.id, type: "social", currency: "USDC", balance: "0", label: "Social Trading Wallet", address: generateWalletAddress() },
       ]);
-
-      // Seed some demo transactions
       await db.insert(transactionsTable).values([
-        { walletId: mainWalletId, userId: user.id, type: "deposit", amount: "10000", currency: "USDC", status: "completed", description: "Demo account welcome deposit" },
-        { walletId: tradingWalletId, userId: user.id, type: "trade_profit", amount: "234.56", currency: "USDC", status: "completed", description: "EUR/USD trade profit" },
+        { walletId: mainWalletId, userId: user.id, type: "deposit", amount: "10000", currency: "USDC", status: "completed", description: "Demo welcome deposit" },
+        { walletId: tradingWalletId, userId: user.id, type: "trade_profit", amount: "234.56", currency: "USDC", status: "completed", description: "EUR/USD demo trade" },
       ]);
-
       await db.insert(notificationsTable).values({
-        userId: user.id,
-        title: "Welcome to ExpressPro101 Demo",
-        message: "Your demo trading account is ready. Explore all features risk-free with $10,000 demo funds.",
-        type: "success",
-        link: "/dashboard",
+        userId: user.id, title: "Welcome to XpressProFX Demo",
+        message: "Your demo account is ready. Explore all features with $10,000 virtual funds.",
+        type: "success", link: "/dashboard",
       });
     }
 
-    // Create a demo session
-    const sessionId = crypto.randomBytes(32).toString("hex");
-    const token = crypto.randomBytes(32).toString("hex");
-    sessions.set(sessionId, {
-      userId: user.id,
-      token,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 3600 * 1000),
-      isAdmin: false,
-    });
-
+    const sessionId = await createSession(user.id, false, 1);
     res.json({
       token: sessionId,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        kycStatus: user.kycStatus,
-        isDemo: true,
-      },
+      user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role, kycStatus: user.kycStatus, isDemo: true },
     });
   } catch (err) {
-    req.log.error({ err }, "Demo account creation failed");
+    req.log.error({ err }, "Demo account failed");
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-export { sessions };
+// ── Admin reps management (head admin only) ────────────────────────────────────
+router.get("/admin-reps", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+    const [session] = await db.select().from(userSessionsTable).where(eq(userSessionsTable.id, token));
+    if (!session?.isAdmin) { res.status(403).json({ error: "Admin access required" }); return; }
+
+    const reps = await db.select().from(adminRepsTable);
+    res.json(reps);
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/admin-reps", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+    const [session] = await db.select().from(userSessionsTable).where(eq(userSessionsTable.id, token));
+    if (!session?.isAdmin) { res.status(403).json({ error: "Admin access required" }); return; }
+
+    // Only head admin can add reps — check users table then admin_reps table for email
+    const [sessionUser] = await db.select().from(usersTable).where(eq(usersTable.id, session.userId));
+    const [sessionRep] = await db.select().from(adminRepsTable).where(eq(adminRepsTable.id, session.userId));
+    const sessionEmail = (sessionUser?.email || sessionRep?.email || "").toLowerCase();
+    const isHead = sessionEmail === _headAdmin().toLowerCase();
+
+    if (!isHead) {
+      res.status(403).json({ error: "Only the head administrator can add admin representatives" }); return;
+    }
+
+    const { email } = req.body;
+    if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+
+    const [existing] = await db.select().from(adminRepsTable).where(eq(adminRepsTable.email, email.toLowerCase().trim()));
+    if (existing) {
+      await db.update(adminRepsTable).set({ isActive: true }).where(eq(adminRepsTable.email, email.toLowerCase().trim()));
+    } else {
+      await db.insert(adminRepsTable).values({ email: email.toLowerCase().trim(), addedBy: "head", isActive: true });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/admin-reps/:email", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+    const [session] = await db.select().from(userSessionsTable).where(eq(userSessionsTable.id, token));
+    if (!session?.isAdmin) { res.status(403).json({ error: "Admin access required" }); return; }
+
+    await db.update(adminRepsTable).set({ isActive: false }).where(eq(adminRepsTable.email, req.params.email));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

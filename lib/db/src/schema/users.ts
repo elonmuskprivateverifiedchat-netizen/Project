@@ -124,6 +124,34 @@ export const referralBonusesTable = pgTable("referral_bonuses", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Persistent database sessions (replaces in-memory Map)
+export const userSessionsTable = pgTable("user_sessions", {
+  id: text("id").primaryKey(),
+  userId: uuid("user_id").notNull(),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Admin representatives authorized to access admin panel
+export const adminRepsTable = pgTable("admin_reps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  addedBy: text("added_by").notNull().default("head"),
+  isActive: boolean("is_active").notNull().default(true),
+  addedAt: timestamp("added_at").notNull().defaultNow(),
+});
+
+// Admin OTP codes (4-digit, 30-min expiry)
+export const adminOtpTable = pgTable("admin_otp", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
 export const insertOtpSchema = createInsertSchema(otpCodesTable).omit({ id: true, createdAt: true });
 export const insertKycDocSchema = createInsertSchema(kycDocumentsTable).omit({ id: true, submittedAt: true });
@@ -132,6 +160,8 @@ export const insertCardRequestSchema = createInsertSchema(cardRequestsTable).omi
 export const insertBankAccountSchema = createInsertSchema(bankAccountsTable).omit({ id: true, createdAt: true });
 export const insertP2PChatSchema = createInsertSchema(p2pChatTable).omit({ id: true, createdAt: true });
 export const insertReferralBonusSchema = createInsertSchema(referralBonusesTable).omit({ id: true, createdAt: true });
+export const insertAdminRepSchema = createInsertSchema(adminRepsTable).omit({ id: true, addedAt: true });
+export const insertAdminOtpSchema = createInsertSchema(adminOtpTable).omit({ id: true, createdAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof usersTable.$inferSelect;

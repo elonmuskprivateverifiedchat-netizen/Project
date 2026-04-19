@@ -29,11 +29,11 @@ const priorityMeta: Record<string, { label: string; class: string }> = {
 };
 
 const socialLinks = [
-  { label: "Instagram", href: "https://instagram.com/expresspro101", icon: Instagram },
-  { label: "X", href: "https://x.com/expresspro101", icon: MessageSquare },
-  { label: "Telegram", href: "https://t.me/expresspro101", icon: Send },
+  { label: "Instagram", href: "https://instagram.com/xpressprofx", icon: Instagram },
+  { label: "X", href: "https://x.com/xpressprofx", icon: MessageSquare },
+  { label: "Telegram", href: "https://t.me/xpressprofx", icon: Send },
   { label: "WhatsApp", href: "https://wa.me/10000000000", icon: HeadphonesIcon },
-  { label: "Facebook", href: "https://facebook.com/expresspro101", icon: Facebook },
+  { label: "Facebook", href: "https://facebook.com/xpressprofx", icon: Facebook },
 ];
 
 export default function Support() {

@@ -35,7 +35,7 @@ function CardDisplay({ card }: { card: any }) {
       <div className="relative z-10 h-full flex flex-col justify-between">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest opacity-70">ExpressPro101</p>
+            <p className="text-xs font-medium uppercase tracking-widest opacity-70">XpressProFX</p>
             <p className="text-lg font-bold mt-0.5">{card.design?.theme || tier.label}</p>
           </div>
           <div className="flex items-center gap-2">

@@ -81,7 +81,7 @@ export default function ForgotPassword() {
             <TrendingUp size={28} className="text-primary-foreground" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">EXPRESSPRO101</h1>
+            <h1 className="text-2xl font-bold text-foreground">XpressProFX</h1>
             <p className="text-sm text-muted-foreground">Account Recovery</p>
           </div>
         </div>

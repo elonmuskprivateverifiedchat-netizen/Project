@@ -61,7 +61,7 @@ export default function KYC() {
     setUploading(true);
     setTimeout(() => {
       // Mock upload URL
-      setDocUrl(`https://mock-storage.expresspro101.com/kyc/${Date.now()}-${docType}.jpg`);
+      setDocUrl(`https://mock-storage.xpressprofx.com/kyc/${Date.now()}-${docType}.jpg`);
       setUploading(false);
       toast({ title: "Document uploaded", description: "Click Submit to complete verification." });
     }, 1500);

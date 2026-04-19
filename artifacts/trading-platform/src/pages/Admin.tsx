@@ -190,7 +190,7 @@ export default function Admin() {
   const qc = useQueryClient();
 
   // Check if admin is properly authenticated
-  const isAdminSession = getRole() === "admin" || window.sessionStorage.getItem("expresspro101_is_admin") === "true";
+  const isAdminSession = getRole() === "admin" || window.sessionStorage.getItem("xpfx_is_admin") === "true";
 
   const [chartOverride, setChartOverride] = useState({ value: "", type: "price" });
   const [pendingOverride, setPendingOverride] = useState<any>(null);
@@ -293,8 +293,8 @@ export default function Admin() {
             </div>
             <h2 className="text-xl font-bold text-foreground">Admin Access Required</h2>
             <p className="text-sm text-muted-foreground">You must log in through the Admin C-Panel login to access this area.</p>
-            <Button className="w-full bg-rose-600 hover:bg-rose-700" onClick={() => window.location.href = "/auth/admin"}>
-              Go to Admin Login
+            <Button className="w-full bg-rose-600 hover:bg-rose-700" onClick={() => window.location.href = "/auth/login"}>
+              Go to Login
             </Button>
           </CardContent>
         </Card>

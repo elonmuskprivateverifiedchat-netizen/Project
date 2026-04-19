@@ -55,7 +55,7 @@ function OrderChat({ order, currentUserId }: { order: any; currentUserId: string
 
   async function handleProof() {
     // Simulate proof upload
-    const mockUrl = `https://mock-storage.expresspro101.com/proof/${Date.now()}.jpg`;
+    const mockUrl = `https://mock-storage.xpressprofx.com/proof/${Date.now()}.jpg`;
     await submitProof.mutateAsync({ orderId: order.id, proofUrl: mockUrl });
     toast({ title: "Proof submitted!", description: "Waiting for vendor confirmation." });
   }

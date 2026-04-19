@@ -147,7 +147,7 @@ export default function Settings() {
               <p className="text-sm font-medium text-amber-400">Security Notice</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Your seed phrase or wallet key code is the master credential for your account. 
-                Never share it with anyone. ExpressPro101 staff will never ask for your seed phrase.
+                Never share it with anyone. XpressProFX staff will never ask for your seed phrase.
                 Store it securely offline — it cannot be recovered if lost.
               </p>
             </div>
