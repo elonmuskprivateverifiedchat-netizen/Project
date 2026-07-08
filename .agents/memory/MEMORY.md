@@ -1,0 +1,1 @@
+- [XpressProFX enterprise stack](enterprise-stack.md) — security middleware, auth flow, test setup, and DB conventions for this project

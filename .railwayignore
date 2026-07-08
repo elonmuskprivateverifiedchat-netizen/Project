@@ -1,0 +1,14 @@
+node_modules
+.env
+*.log
+*.local
+artifacts/trading-platform/node_modules
+artifacts/mockup-sandbox/node_modules
+lib/*/node_modules
+**/*.test.ts
+**/*.spec.ts
+tests/
+docs/
+.git
+.github
+attached_assets

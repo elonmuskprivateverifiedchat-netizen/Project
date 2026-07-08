@@ -1,0 +1,10 @@
+{
+  "provider": "nodejs",
+  "install": "pnpm install --frozen-lockfile",
+  "build": "pnpm --filter @workspace/api-server run build",
+  "start": "node artifacts/api-server/dist/index.mjs",
+  "env": {
+    "NODE_ENV": "production",
+    "PORT": "8080"
+  }
+}

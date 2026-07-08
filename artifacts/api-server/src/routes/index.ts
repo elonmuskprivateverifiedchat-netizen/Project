@@ -16,13 +16,20 @@ import bankRouter from "./bank";
 import adminRouter from "./admin";
 import programsRouter from "./programs";
 import referralsRouter from "./referrals";
+import investmentRouter from "./investment";
+import webhooksRouter from "./webhooks";
+import tradingForexRouter from "./trading-forex";
 import { requireAuth } from "../middleware/auth";
 
 const router: IRouter = Router();
 
+// ── Public routes ──────────────────────────────────────────────────────────
 router.use(healthRouter);
 router.use("/auth", authRouter);
+router.use("/webhooks", webhooksRouter);          // payment/kyc gateway callbacks
+router.use("/trading", tradingForexRouter);        // public: pairs & rates (orders protected below)
 
+// ── Protected routes (require Bearer session token) ────────────────────────
 router.use(requireAuth);
 
 router.use("/users", usersRouter);
@@ -40,5 +47,6 @@ router.use("/bank", bankRouter);
 router.use("/admin", adminRouter);
 router.use("/programs", programsRouter);
 router.use("/referrals", referralsRouter);
+router.use("/investment", investmentRouter);
 
 export default router;
