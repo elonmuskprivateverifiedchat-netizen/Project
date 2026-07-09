@@ -1,1 +1,3 @@
 - [XpressProFX enterprise stack](enterprise-stack.md) — security middleware, auth flow, test setup, and DB conventions for this project
+- [Design system tokens](design-tokens.md) — trading platform uses dark-first tokens; buy/sell semantic colors distinct from primary teal; .num utility for monospace prices
+- [Layout architecture](layout-arch.md) — sidebar nav links to /dashboard (not /); live ticker via useForexRates singleton socket; balance summary in sidebar

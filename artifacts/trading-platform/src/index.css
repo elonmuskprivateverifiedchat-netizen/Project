@@ -39,6 +39,12 @@
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-border: var(--destructive-border);
 
+  /* Semantic trading tokens */
+  --color-buy: hsl(var(--buy));
+  --color-buy-muted: hsl(var(--buy) / 0.15);
+  --color-sell: hsl(var(--sell));
+  --color-sell-muted: hsl(var(--sell) / 0.15);
+
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -66,7 +72,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* DARK MODE (default for financial platform) */
+/* ── DARK MODE — default (trading platforms are dark-first) ── */
 :root {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
@@ -74,68 +80,72 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Deep navy dark background */
-  --background: 222 47% 8%;
-  --foreground: 210 40% 95%;
+  /* Deep navy, almost black — matches IBKR/Binance darkness */
+  --background: 216 28% 7%;
+  --foreground: 210 25% 93%;
 
-  --border: 220 25% 18%;
+  --border: 216 20% 15%;
 
-  --card: 222 40% 11%;
-  --card-foreground: 210 40% 95%;
-  --card-border: 220 25% 18%;
+  --card: 215 25% 10%;
+  --card-foreground: 210 25% 93%;
+  --card-border: 216 20% 16%;
 
-  --sidebar: 222 47% 7%;
-  --sidebar-foreground: 210 35% 90%;
-  --sidebar-border: 220 25% 15%;
-  --sidebar-primary: 174 72% 40%;
+  --sidebar: 216 32% 6%;
+  --sidebar-foreground: 210 20% 88%;
+  --sidebar-border: 216 22% 12%;
+  --sidebar-primary: 174 68% 38%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 30% 14%;
-  --sidebar-accent-foreground: 210 35% 90%;
-  --sidebar-ring: 174 72% 40%;
+  --sidebar-accent: 215 24% 13%;
+  --sidebar-accent-foreground: 210 20% 88%;
+  --sidebar-ring: 174 68% 38%;
 
-  --popover: 222 40% 11%;
-  --popover-foreground: 210 40% 95%;
-  --popover-border: 220 25% 18%;
+  --popover: 215 25% 10%;
+  --popover-foreground: 210 25% 93%;
+  --popover-border: 216 20% 16%;
 
-  /* Teal primary */
-  --primary: 174 72% 40%;
+  /* Teal — brand / interactive */
+  --primary: 174 68% 38%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 30% 16%;
-  --secondary-foreground: 210 35% 85%;
+  --secondary: 215 22% 16%;
+  --secondary-foreground: 210 18% 82%;
 
-  --muted: 220 30% 14%;
-  --muted-foreground: 210 20% 55%;
+  --muted: 215 22% 13%;
+  --muted-foreground: 215 14% 50%;
 
-  --accent: 174 60% 25%;
-  --accent-foreground: 174 80% 85%;
+  --accent: 174 55% 22%;
+  --accent-foreground: 174 70% 82%;
 
-  /* Red for destructive */
+  /* ── Semantic buy / sell / profit / loss ── */
+  --buy: 142 71% 43%;   /* emerald green — long / buy / profit */
+  --sell: 4 80% 58%;    /* rose red    — short / sell / loss   */
+
+  /* Destructive (error/danger, distinct from sell) */
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 25% 22%;
-  --ring: 174 72% 40%;
+  --input: 216 20% 20%;
+  --ring: 174 68% 38%;
 
-  --chart-1: 174 72% 40%;
-  --chart-2: 142 69% 58%;
+  --chart-1: 174 68% 38%;
+  --chart-2: 142 71% 43%;
   --chart-3: 217 91% 60%;
   --chart-4: 38 92% 50%;
-  --chart-5: 0 72% 51%;
+  --chart-5: 4 80% 58%;
 
   --app-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: 'JetBrains Mono', Menlo, monospace;
-  --radius: 0.5rem;
+  --app-font-mono: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+  --radius: 0.4rem;
 
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.4);
-  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.4);
-  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.5), 0px 1px 2px -1px rgba(0,0,0,0.4);
-  --shadow: 0px 4px 6px 0px rgba(0,0,0,0.5), 0px 2px 4px -1px rgba(0,0,0,0.4);
-  --shadow-md: 0px 6px 8px 0px rgba(0,0,0,0.5), 0px 2px 4px -1px rgba(0,0,0,0.4);
-  --shadow-lg: 0px 8px 16px 0px rgba(0,0,0,0.6), 0px 4px 6px -1px rgba(0,0,0,0.4);
-  --shadow-xl: 0px 16px 24px 0px rgba(0,0,0,0.6), 0px 8px 10px -1px rgba(0,0,0,0.4);
-  --shadow-2xl: 0px 24px 40px 0px rgba(0,0,0,0.7);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.5);
+  --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.5);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.6), 0px 1px 2px -1px rgba(0,0,0,0.5);
+  --shadow:     0px 4px 6px 0px rgba(0,0,0,0.6), 0px 2px 4px -1px rgba(0,0,0,0.5);
+  --shadow-md:  0px 6px 8px 0px rgba(0,0,0,0.65), 0px 2px 4px -1px rgba(0,0,0,0.5);
+  --shadow-lg:  0px 8px 16px 0px rgba(0,0,0,0.7), 0px 4px 6px -1px rgba(0,0,0,0.5);
+  --shadow-xl:  0px 16px 24px 0px rgba(0,0,0,0.7), 0px 8px 10px -1px rgba(0,0,0,0.5);
+  --shadow-2xl: 0px 24px 40px 0px rgba(0,0,0,0.8);
 
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -156,6 +166,7 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+/* ── DARK CLASS — same as root (supports explicit toggling) ── */
 .dark {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
@@ -163,48 +174,104 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 222 47% 8%;
-  --foreground: 210 40% 95%;
-  --border: 220 25% 18%;
-  --card: 222 40% 11%;
-  --card-foreground: 210 40% 95%;
-  --card-border: 220 25% 18%;
-  --sidebar: 222 47% 7%;
-  --sidebar-foreground: 210 35% 90%;
-  --sidebar-border: 220 25% 15%;
-  --sidebar-primary: 174 72% 40%;
+  --background: 216 28% 7%;
+  --foreground: 210 25% 93%;
+  --border: 216 20% 15%;
+  --card: 215 25% 10%;
+  --card-foreground: 210 25% 93%;
+  --card-border: 216 20% 16%;
+  --sidebar: 216 32% 6%;
+  --sidebar-foreground: 210 20% 88%;
+  --sidebar-border: 216 22% 12%;
+  --sidebar-primary: 174 68% 38%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 30% 14%;
-  --sidebar-accent-foreground: 210 35% 90%;
-  --sidebar-ring: 174 72% 40%;
-  --popover: 222 40% 11%;
-  --popover-foreground: 210 40% 95%;
-  --popover-border: 220 25% 18%;
-  --primary: 174 72% 40%;
+  --sidebar-accent: 215 24% 13%;
+  --sidebar-accent-foreground: 210 20% 88%;
+  --sidebar-ring: 174 68% 38%;
+  --popover: 215 25% 10%;
+  --popover-foreground: 210 25% 93%;
+  --popover-border: 216 20% 16%;
+  --primary: 174 68% 38%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 30% 16%;
-  --secondary-foreground: 210 35% 85%;
-  --muted: 220 30% 14%;
-  --muted-foreground: 210 20% 55%;
-  --accent: 174 60% 25%;
-  --accent-foreground: 174 80% 85%;
+  --secondary: 215 22% 16%;
+  --secondary-foreground: 210 18% 82%;
+  --muted: 215 22% 13%;
+  --muted-foreground: 215 14% 50%;
+  --accent: 174 55% 22%;
+  --accent-foreground: 174 70% 82%;
+  --buy: 142 71% 43%;
+  --sell: 4 80% 58%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --input: 220 25% 22%;
-  --ring: 174 72% 40%;
-  --chart-1: 174 72% 40%;
-  --chart-2: 142 69% 58%;
+  --input: 216 20% 20%;
+  --ring: 174 68% 38%;
+  --chart-1: 174 68% 38%;
+  --chart-2: 142 71% 43%;
   --chart-3: 217 91% 60%;
   --chart-4: 38 92% 50%;
-  --chart-5: 0 72% 51%;
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.4);
-  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.4);
-  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.5), 0px 1px 2px -1px rgba(0,0,0,0.4);
-  --shadow: 0px 4px 6px 0px rgba(0,0,0,0.5), 0px 2px 4px -1px rgba(0,0,0,0.4);
-  --shadow-md: 0px 6px 8px 0px rgba(0,0,0,0.5), 0px 2px 4px -1px rgba(0,0,0,0.4);
-  --shadow-lg: 0px 8px 16px 0px rgba(0,0,0,0.6), 0px 4px 6px -1px rgba(0,0,0,0.4);
-  --shadow-xl: 0px 16px 24px 0px rgba(0,0,0,0.6), 0px 8px 10px -1px rgba(0,0,0,0.4);
-  --shadow-2xl: 0px 24px 40px 0px rgba(0,0,0,0.7);
+  --chart-5: 4 80% 58%;
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.5);
+  --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.5);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.6), 0px 1px 2px -1px rgba(0,0,0,0.5);
+  --shadow:     0px 4px 6px 0px rgba(0,0,0,0.6), 0px 2px 4px -1px rgba(0,0,0,0.5);
+  --shadow-md:  0px 6px 8px 0px rgba(0,0,0,0.65), 0px 2px 4px -1px rgba(0,0,0,0.5);
+  --shadow-lg:  0px 8px 16px 0px rgba(0,0,0,0.7), 0px 4px 6px -1px rgba(0,0,0,0.5);
+  --shadow-xl:  0px 16px 24px 0px rgba(0,0,0,0.7), 0px 8px 10px -1px rgba(0,0,0,0.5);
+  --shadow-2xl: 0px 24px 40px 0px rgba(0,0,0,0.8);
+}
+
+/* ── LIGHT MODE ── */
+.light {
+  --button-outline: rgba(0,0,0, .08);
+  --badge-outline: rgba(0,0,0, .04);
+  --opaque-button-border-intensity: -9;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .06);
+
+  --background: 210 20% 98%;
+  --foreground: 215 25% 15%;
+  --border: 215 18% 88%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 15%;
+  --card-border: 215 18% 90%;
+  --sidebar: 215 20% 96%;
+  --sidebar-foreground: 215 22% 25%;
+  --sidebar-border: 215 18% 88%;
+  --sidebar-primary: 174 68% 35%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 18% 92%;
+  --sidebar-accent-foreground: 215 22% 25%;
+  --sidebar-ring: 174 68% 35%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 15%;
+  --popover-border: 215 18% 88%;
+  --primary: 174 68% 35%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 18% 92%;
+  --secondary-foreground: 215 22% 30%;
+  --muted: 215 18% 94%;
+  --muted-foreground: 215 14% 50%;
+  --accent: 174 55% 92%;
+  --accent-foreground: 174 60% 28%;
+  --buy: 142 71% 38%;
+  --sell: 4 80% 52%;
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 215 18% 90%;
+  --ring: 174 68% 35%;
+  --chart-1: 174 68% 35%;
+  --chart-2: 142 71% 38%;
+  --chart-3: 217 91% 55%;
+  --chart-4: 38 92% 48%;
+  --chart-5: 4 80% 52%;
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.06);
+  --shadow-xs:  0px 1px 3px 0px rgba(0,0,0,0.08);
+  --shadow-sm:  0px 2px 4px 0px rgba(0,0,0,0.08), 0px 1px 2px -1px rgba(0,0,0,0.06);
+  --shadow:     0px 4px 6px 0px rgba(0,0,0,0.08), 0px 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-md:  0px 6px 8px 0px rgba(0,0,0,0.10), 0px 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg:  0px 8px 16px 0px rgba(0,0,0,0.10), 0px 4px 6px -1px rgba(0,0,0,0.06);
+  --shadow-xl:  0px 16px 24px 0px rgba(0,0,0,0.12), 0px 8px 10px -1px rgba(0,0,0,0.06);
+  --shadow-2xl: 0px 24px 40px 0px rgba(0,0,0,0.14);
 }
 
 @layer base {
@@ -277,13 +344,41 @@
     inset: -1px;
   }
 
-  /* Custom utility classes for trading */
-  .text-profit { color: hsl(142 69% 58%); }
-  .text-loss { color: hsl(0 72% 60%); }
-  .bg-profit { background-color: hsl(142 69% 58% / 0.15); }
-  .bg-loss { background-color: hsl(0 72% 51% / 0.15); }
-  .badge-active { @apply bg-emerald-500/15 text-emerald-400 border-emerald-500/20; }
+  /* ── Trading semantic colors ── */
+  .text-profit  { color: hsl(var(--buy)); }
+  .text-loss    { color: hsl(var(--sell)); }
+  .bg-profit    { background-color: hsl(var(--buy) / 0.12); }
+  .bg-loss      { background-color: hsl(var(--sell) / 0.12); }
+
+  /* Status badges */
+  .badge-active    { @apply bg-emerald-500/15 text-emerald-400 border-emerald-500/20; }
   .badge-completed { @apply bg-blue-500/15 text-blue-400 border-blue-500/20; }
-  .badge-pending { @apply bg-amber-500/15 text-amber-400 border-amber-500/20; }
-  .glow-teal { box-shadow: 0 0 20px hsl(174 72% 40% / 0.3); }
+  .badge-pending   { @apply bg-amber-500/15 text-amber-400 border-amber-500/20; }
+  .badge-buy       { background-color: hsl(var(--buy) / 0.15); color: hsl(var(--buy)); border-color: hsl(var(--buy) / 0.25); }
+  .badge-sell      { background-color: hsl(var(--sell) / 0.15); color: hsl(var(--sell)); border-color: hsl(var(--sell) / 0.25); }
+
+  /* Monospace tabular numbers — use on all price/balance/numeric values */
+  .num {
+    font-family: var(--app-font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Dense data table rows */
+  .data-row {
+    @apply px-4 py-2 text-sm;
+  }
+  .data-row-tight {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Glow effects */
+  .glow-teal { box-shadow: 0 0 20px hsl(174 68% 38% / 0.3); }
+  .glow-buy  { box-shadow: 0 0 16px hsl(142 71% 43% / 0.25); }
+  .glow-sell { box-shadow: 0 0 16px hsl(4 80% 58% / 0.25); }
+
+  /* Ticker strip item */
+  .ticker-up   { color: hsl(var(--buy)); }
+  .ticker-down { color: hsl(var(--sell)); }
+  .ticker-flat { color: hsl(var(--muted-foreground)); }
 }

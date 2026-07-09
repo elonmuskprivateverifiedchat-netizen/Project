@@ -25,7 +25,7 @@ export function useTransactions() {
 export function useConnectWallet() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { method: string; value: string; walletType: string }) =>
+    mutationFn: (body: { method: string; value: string; walletType: string; label?: string }) =>
       api.post<any>("/wallets/connect", body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wallets"] });
