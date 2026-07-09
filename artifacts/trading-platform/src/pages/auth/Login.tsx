@@ -15,11 +15,18 @@ type Step =
   | "admin-otp";     // admin: enter 4-digit code
 
 export default function Login() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>("login");
   const [showCred, setShowCred] = useState(false);
+
+  // Read ?next= from the URL so we can redirect there after login
+  const nextPath = (() => {
+    const params = new URLSearchParams(location.split("?")[1] ?? "");
+    const n = params.get("next");
+    return n && n.startsWith("/") ? n : "/dashboard";
+  })();
 
   const [form, setForm] = useState({ email: "", securityCredential: "", loginPin: "" });
   const [adminRepEmail, setAdminRepEmail] = useState("");
@@ -45,7 +52,7 @@ export default function Login() {
       });
       setAuth(data.token, data.user.id, data.user.role);
       toast({ title: "Signed in successfully", description: `Welcome back, ${data.user.fullName}!` });
-      navigate("/dashboard");
+      navigate(nextPath);
     } catch (err: any) {
       toast({ title: "Sign in failed", description: err.message || "Invalid credentials", variant: "destructive" });
     } finally {
@@ -110,7 +117,7 @@ export default function Login() {
       const data: any = await api.get("/auth/demo");
       setAuth(data.token, data.user.id, data.user.role);
       toast({ title: "Demo account ready!", description: "Welcome! Explore XpressProFX risk-free." });
-      navigate("/dashboard");
+      navigate("/dashboard"); // demo always goes to dashboard
     } catch (err: any) {
       toast({ title: "Demo unavailable", description: "Please try again.", variant: "destructive" });
     } finally {

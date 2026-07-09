@@ -4,6 +4,8 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/Layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Trading from "@/pages/Trading";
 import Managers from "@/pages/Managers";
@@ -37,34 +39,40 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
+      {/* ── Public routes ─────────────────────────────────────────────── */}
+      <Route path="/" component={Home} />
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/register" component={Register} />
       <Route path="/auth/security-setup" component={SecuritySetup} />
       <Route path="/auth/forgot-password" component={ForgotPassword} />
+
+      {/* ── Admin panel (own auth guard) ──────────────────────────────── */}
       <Route path="/c-panel" component={Admin} />
 
+      {/* ── Protected routes — redirect to /auth/login?next=<path> ───── */}
       <Route>
         {() => (
-          <Layout>
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              <Route path="/dashboard" component={Dashboard} />
-              <Route path="/trading" component={Trading} />
-              <Route path="/managers" component={Managers} />
-              <Route path="/p2p" component={P2P} />
-              <Route path="/programs" component={Programs} />
-              <Route path="/wallet" component={WalletPage} />
-              <Route path="/buy" component={BuyAssets} />
-              <Route path="/support" component={Support} />
-              <Route path="/messages" component={Messages} />
-              <Route path="/kyc" component={KYC} />
-              <Route path="/notifications" component={Notifications} />
-              <Route path="/cards" component={Cards} />
-              <Route path="/demo" component={DemoTrading} />
-              <Route path="/settings" component={Settings} />
-              <Route component={NotFound} />
-            </Switch>
-          </Layout>
+          <ProtectedRoute>
+            <Layout>
+              <Switch>
+                <Route path="/dashboard" component={Dashboard} />
+                <Route path="/trading" component={Trading} />
+                <Route path="/managers" component={Managers} />
+                <Route path="/p2p" component={P2P} />
+                <Route path="/programs" component={Programs} />
+                <Route path="/wallet" component={WalletPage} />
+                <Route path="/buy" component={BuyAssets} />
+                <Route path="/support" component={Support} />
+                <Route path="/messages" component={Messages} />
+                <Route path="/kyc" component={KYC} />
+                <Route path="/notifications" component={Notifications} />
+                <Route path="/cards" component={Cards} />
+                <Route path="/demo" component={DemoTrading} />
+                <Route path="/settings" component={Settings} />
+                <Route component={NotFound} />
+              </Switch>
+            </Layout>
+          </ProtectedRoute>
         )}
       </Route>
     </Switch>

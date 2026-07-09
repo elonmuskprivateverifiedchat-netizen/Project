@@ -11,8 +11,6 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   };
 
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  // Admin routes — token already contains admin flag in DB session
-  void path; // token-based auth handles admin access
 
   const res = await fetch(`${BASE}/api${path}`, {
     headers,
@@ -21,7 +19,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (res.status === 401) {
     clearAuth();
-    window.location.href = BASE + "/auth/login";
+    // Preserve the current path so the user lands back here after login
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `${BASE}/auth/login?next=${next}`;
     throw new Error("Session expired. Please sign in again.");
   }
 
