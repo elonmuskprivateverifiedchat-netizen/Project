@@ -1,7 +1,13 @@
-version: "3.8"
 services:
   db:
     image: postgres:15
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -15,14 +21,23 @@ services:
     build:
       context: .
       dockerfile: artifacts/api-server/Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
-      - NODE_ENV=development
-      - PORT=3000
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
     depends_on:
       - db
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const http = require('http'); const req = http.request({ host: '127.0.0.1', port: 3000, path: '/healthz', timeout: 5000 }, res => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_AUTO_MIGRATE=true
+      - CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "3000:3000"
 
 volumes:
   db-data:
