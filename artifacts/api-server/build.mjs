@@ -42,8 +42,8 @@ async function buildAll() {
       "bufferutil",
       "utf-8-validate",
       // "socket.io", // bundle socket.io into the dist so runtime doesn't require it
-      "socket.io-adapter",
-      "engine.io",
+      // "socket.io-adapter", // bundle socket.io-adapter
+      // "engine.io", // bundle engine.io
       "ssh2",
       "cpu-features",
       "dtrace-provider",
