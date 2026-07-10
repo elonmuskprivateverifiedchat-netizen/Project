@@ -26,7 +26,7 @@ COPY --from=builder /workspace/artifacts/api-server/package.json ./package.json
 
 # Install only production dependencies for the api-server package
 ENV NODE_ENV=production
-RUN pnpm install --frozen-lockfile --prod --filter @workspace/api-server
+RUN pnpm install --no-frozen-lockfile --prod --filter @workspace/api-server
 
 EXPOSE 3000
 CMD ["node", "--enable-source-maps", "./dist/index.mjs"]
