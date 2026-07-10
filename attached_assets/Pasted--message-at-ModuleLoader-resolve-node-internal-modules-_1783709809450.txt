@@ -1,0 +1,68 @@
+{"message":"    at ModuleLoader.resolve (node:internal/modules/esm/loader:694:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174805945Z"}
+{"message":"    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:308:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174818176Z"}
+{"message":"    at ModuleJob._link (node:internal/modules/esm/module_job:183:49) {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174825727Z"}
+{"message":"  code: 'ERR_MODULE_NOT_FOUND'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174833715Z"}
+{"message":"Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'socket.io' imported from /app/artifacts/api-server/dist/index.mjs","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174835429Z"}
+{"message":"    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:266:9)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174842890Z"}
+{"message":"    at packageResolve (node:internal/modules/esm/resolve:767:81)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174848194Z"}
+{"message":"node:internal/modules/package_json_reader:266","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174852088Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174853268Z"}
+{"message":"    at moduleResolve (node:internal/modules/esm/resolve:853:18)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174854759Z"}
+{"message":"  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174858853Z"}
+{"message":"    at defaultResolve (node:internal/modules/esm/resolve:983:11)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174861194Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174867549Z"}
+{"message":"        ^","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174868316Z"}
+{"message":"    at #cachedDefaultResolve (node:internal/modules/esm/loader:717:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174869367Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174875345Z"}
+{"message":"Node.js v22.19.0","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.174877131Z"}
+{"message":"  code: 'ERR_MODULE_NOT_FOUND'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642487417Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642496454Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642501528Z"}
+{"message":"Node.js v22.19.0","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642517327Z"}
+{"message":"node:internal/modules/package_json_reader:266","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642569215Z"}
+{"message":"  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642574681Z"}
+{"message":"        ^","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642580725Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642586454Z"}
+{"message":"Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'socket.io' imported from /app/artifacts/api-server/dist/index.mjs","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642616870Z"}
+{"message":"    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:266:9)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642625826Z"}
+{"message":"    at packageResolve (node:internal/modules/esm/resolve:767:81)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642631162Z"}
+{"message":"    at moduleResolve (node:internal/modules/esm/resolve:853:18)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642637458Z"}
+{"message":"    at defaultResolve (node:internal/modules/esm/resolve:983:11)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642643704Z"}
+{"message":"    at #cachedDefaultResolve (node:internal/modules/esm/loader:717:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642649016Z"}
+{"message":"    at ModuleLoader.resolve (node:internal/modules/esm/loader:694:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642654265Z"}
+{"message":"    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:308:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642660374Z"}
+{"message":"    at ModuleJob._link (node:internal/modules/esm/module_job:183:49) {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:49.642665810Z"}
+{"message":"node:internal/modules/package_json_reader:266","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418353305Z"}
+{"message":"  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418360724Z"}
+{"message":"        ^","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418365920Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418373699Z"}
+{"message":"Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'socket.io' imported from /app/artifacts/api-server/dist/index.mjs","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418379942Z"}
+{"message":"    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:266:9)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418386247Z"}
+{"message":"    at packageResolve (node:internal/modules/esm/resolve:767:81)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418393406Z"}
+{"message":"    at moduleResolve (node:internal/modules/esm/resolve:853:18)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418398801Z"}
+{"message":"    at defaultResolve (node:internal/modules/esm/resolve:983:11)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418404838Z"}
+{"message":"    at #cachedDefaultResolve (node:internal/modules/esm/loader:717:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418409614Z"}
+{"message":"    at ModuleLoader.resolve (node:internal/modules/esm/loader:694:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418414357Z"}
+{"message":"    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:308:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418420407Z"}
+{"message":"    at ModuleJob._link (node:internal/modules/esm/module_job:183:49) {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418426372Z"}
+{"message":"  code: 'ERR_MODULE_NOT_FOUND'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418434241Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418439137Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418444484Z"}
+{"message":"Node.js v22.19.0","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:51.418449992Z"}
+{"message":"node:internal/modules/package_json_reader:266","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463106727Z"}
+{"message":"  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463113716Z"}
+{"message":"        ^","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463120130Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463126885Z"}
+{"message":"Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'socket.io' imported from /app/artifacts/api-server/dist/index.mjs","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463136404Z"}
+{"message":"    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:266:9)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463143378Z"}
+{"message":"    at packageResolve (node:internal/modules/esm/resolve:767:81)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463148806Z"}
+{"message":"    at moduleResolve (node:internal/modules/esm/resolve:853:18)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463154691Z"}
+{"message":"    at defaultResolve (node:internal/modules/esm/resolve:983:11)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463161354Z"}
+{"message":"    at #cachedDefaultResolve (node:internal/modules/esm/loader:717:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463167791Z"}
+{"message":"    at ModuleLoader.resolve (node:internal/modules/esm/loader:694:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463173865Z"}
+{"message":"    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:308:38)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463179339Z"}
+{"message":"    at ModuleJob._link (node:internal/modules/esm/module_job:183:49) {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463185785Z"}
+{"message":"  code: 'ERR_MODULE_NOT_FOUND'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463191168Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463196836Z"}
+{"message":"","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463202078Z"}
+{"message":"Node.js v22.19.0","severity":"error","attributes":{"level":"error"},"timestamp":"2026-07-10T18:51:52.463207890Z"}
