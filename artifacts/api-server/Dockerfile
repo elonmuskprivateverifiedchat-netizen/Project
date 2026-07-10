@@ -14,7 +14,7 @@ RUN pnpm --filter @workspace/api-server run build
 
 # Install production dependencies specifically for the api-server into its package folder
 # This creates a standalone node_modules at artifacts/api-server/node_modules that can be copied
-RUN pnpm --no-frozen-lockfile --prod --filter @workspace/api-server --dir artifacts/api-server install
+RUN pnpm --no-frozen-lockfile --prod --filter @workspace/api-server --dir artifacts/api-server install --shamefully-hoist
 
 FROM node:20-alpine AS runner
 WORKDIR /app
