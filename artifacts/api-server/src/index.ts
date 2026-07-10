@@ -7,13 +7,15 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { startWithdrawalReminderJob } from "./lib/withdrawalReminders";
 import { attachSocketIO } from "./lib/forex-socket";
+import { getDatabaseUrl } from "../../../lib/db/src/env";
 
 async function waitForDatabase(retries = 30, delayMs = 1000) {
-  if (!process.env.DATABASE_URL) {
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
     throw new Error("DATABASE_URL must be set to wait for the database.");
   }
 
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  const client = new Client({ connectionString: databaseUrl });
   for (let attempt = 1; attempt <= retries; attempt += 1) {
     try {
       await client.connect();
@@ -35,7 +37,8 @@ async function runDatabaseMigrations() {
     return;
   }
 
-  if (!process.env.DATABASE_URL) {
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
     throw new Error("DATABASE_URL must be set to run database migrations.");
   }
 
