@@ -28,6 +28,9 @@ COPY --from=builder /workspace/artifacts/api-server/dist /workspace/artifacts/ap
 
 # Copy the workspace db package so migrations can run at startup
 COPY --from=builder /workspace/lib/db ./lib/db
+COPY --from=builder /workspace/lib/api-zod ./lib/api-zod
+COPY --from=builder /workspace/lib/db /lib/db
+COPY --from=builder /workspace/lib/api-zod /lib/api-zod
 
 # Copy the standalone production node_modules created in the builder stage
 COPY --from=builder /workspace/artifacts/api-server/node_modules ./node_modules
