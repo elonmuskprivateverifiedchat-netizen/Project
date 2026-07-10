@@ -41,7 +41,7 @@ async function buildAll() {
       "xxhash-addon",
       "bufferutil",
       "utf-8-validate",
-      "socket.io",
+      // "socket.io", // bundle socket.io into the dist so runtime doesn't require it
       "socket.io-adapter",
       "engine.io",
       "ssh2",
