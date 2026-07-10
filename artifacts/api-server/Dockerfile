@@ -16,11 +16,17 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.26.1 --activate
 
-# Copy package manifest and built output for api-server
-COPY --from=builder /workspace/artifacts/api-server/package.json ./package.json
+# Copy built output
 COPY --from=builder /workspace/artifacts/api-server/dist ./dist
-COPY --from=builder /workspace/node_modules ./node_modules
 
+# Copy lockfile and workspace config so pnpm can install production deps for this package
+COPY --from=builder /workspace/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /workspace/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /workspace/artifacts/api-server/package.json ./package.json
+
+# Install only production dependencies for the api-server package
 ENV NODE_ENV=production
+RUN pnpm install --frozen-lockfile --prod --filter @workspace/api-server
+
 EXPOSE 3000
 CMD ["node", "--enable-source-maps", "./dist/index.mjs"]
