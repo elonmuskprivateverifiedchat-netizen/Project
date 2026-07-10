@@ -1,0 +1,14 @@
+[Unit]
+Description=Project API Server (Docker)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+EnvironmentFile=/etc/project/.env
+ExecStartPre=/usr/bin/docker pull ghcr.io/REPLACE_WITH_OWNER/project-api-server:latest
+ExecStart=/usr/bin/docker run --rm --name project-api-server --env-file /etc/project/.env -p 3000:3000 ghcr.io/REPLACE_WITH_OWNER/project-api-server:latest
+ExecStop=/usr/bin/docker rm -f project-api-server || true
+
+[Install]
+WantedBy=multi-user.target

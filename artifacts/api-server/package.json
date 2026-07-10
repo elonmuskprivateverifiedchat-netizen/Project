@@ -20,14 +20,15 @@
     "cookie-parser": "^1.4.7",
     "socket.io": "^4.8.1",
     "cors": "^2",
-    "drizzle-orm": "catalog:",
+    "drizzle-orm": "^0.45.2",
     "express": "^5",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
     "nodemailer": "^8.0.5",
     "pino": "^9",
     "pino-http": "^10",
-    "zod": "catalog:"
+    "socket.io": "^4.8.3",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
@@ -35,7 +36,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
-    "@types/node": "catalog:",
+    "@types/node": "^25.3.3",
     "@types/supertest": "^7.2.0",
     "esbuild": "^0.27.3",
     "esbuild-plugin-pino": "^2.3.3",
