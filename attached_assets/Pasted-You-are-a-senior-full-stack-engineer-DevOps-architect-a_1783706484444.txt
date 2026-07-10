@@ -1,0 +1,152 @@
+You are a senior full-stack engineer, DevOps architect, and production reliability expert.
+
+Your mission is to transform this PNPM-based monorepo into a fully production-ready, enterprise-grade system ready for real users.
+
+CRITICAL RULES:
+
+* Use PNPM only. Do NOT switch package managers.
+* DO NOT push or deploy unless the system works perfectly locally.
+* DO NOT skip errors — fix them completely.
+* You MUST provide PROOF and ACCOUNTABILITY of all work done.
+
+⸻
+
+PHASE 1: SYSTEM ANALYSIS
+
+* Analyze pnpm-workspace.yaml and full structure.
+* Identify frontend, backend, shared packages.
+
+⸻
+
+PHASE 2: DEPENDENCY + BUILD FIX
+
+* Run:
+    pnpm install –no-frozen-lockfile
+* Run:
+    pnpm -r build
+* Fix ALL errors completely.
+
+⸻
+
+PHASE 3: RUNTIME VALIDATION
+
+* Start backend:
+    node artifacts/api-server/dist/index.mjs
+* Start frontend.
+* Ensure both run without errors.
+
+⸻
+
+PHASE 4: INTEGRATION TEST
+
+* Test frontend ↔ backend communication.
+* Fix API, CORS, env issues.
+
+⸻
+
+PHASE 5: ADMIN PANEL
+
+* Locate or create admin panel.
+* Provide:
+    * Admin URL
+    * Username/email
+    * Password
+* Ensure secure authentication.
+
+⸻
+
+PHASE 6: ENVIRONMENT SETUP
+
+* Create .env.example
+* Remove Replit dependencies
+* Ensure Railway compatibility
+
+⸻
+
+PHASE 7: PRODUCTION HARDENING
+
+* Remove debug logs
+* Add error handling
+* Secure endpoints
+* Validate inputs
+
+⸻
+
+PHASE 8: FINAL LOCAL TEST (MANDATORY)
+
+ALL must pass:
+pnpm install –no-frozen-lockfile
+pnpm build
+node artifacts/api-server/dist/index.mjs
+
+If any fails → FIX IT COMPLETELY.
+
+⸻
+
+PHASE 9: GIT PREPARATION
+
+* Clean unnecessary files
+* Fix .gitignore
+
+⸻
+
+PHASE 10: COMMIT & PUSH
+
+ONLY after success:
+
+* Commit message:
+    “feat: enterprise-grade production-ready system with verified integration and admin access”
+* Push to GitHub
+
+⸻
+
+PHASE 11: ACCOUNTABILITY REPORT (VERY IMPORTANT)
+
+You MUST output a detailed report with PROOF.
+
+FORMAT:
+
+1. SUMMARY
+
+* Project status (Working / Fixed / Failed)
+
+2. CHANGES MADE
+
+* List ALL files modified
+* Explain what was fixed in each file
+
+3. COMMANDS EXECUTED
+
+* Show ALL commands run (pnpm install, build, start, etc.)
+
+4. ERRORS FOUND & FIXED
+
+* List each error
+* Explain how it was resolved
+
+5. RUNNING VERIFICATION
+
+* Show proof backend started successfully
+* Show proof frontend works
+* Show API test result
+
+6. ADMIN ACCESS
+
+* Admin URL:
+* Username:
+* Password:
+
+7. DEPLOYMENT READINESS
+
+* Confirm:
+    “READY FOR RAILWAY DEPLOYMENT” OR explain why not
+
+8. REMAINING ISSUES (IF ANY)
+
+* List clearly
+
+⸻
+
+FINAL RULE:
+
+If you cannot prove the system works, DO NOT push.
