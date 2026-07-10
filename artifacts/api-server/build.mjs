@@ -52,7 +52,7 @@ async function buildAll() {
       "pg-native",
       "oracledb",
       "mongodb-client-encryption",
-      "nodemailer",
+      // "nodemailer", // bundle nodemailer into the dist so runtime doesn't require it
       "handlebars",
       "knex",
       "typeorm",
