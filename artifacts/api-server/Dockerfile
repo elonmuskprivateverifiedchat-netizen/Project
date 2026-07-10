@@ -22,6 +22,8 @@ RUN corepack enable && corepack prepare pnpm@10.26.1 --activate
 
 # Copy built output
 COPY --from=builder /workspace/artifacts/api-server/dist ./dist
+# Also copy the built output to the original workspace path some worker threads expect
+COPY --from=builder /workspace/artifacts/api-server/dist /workspace/artifacts/api-server/dist
 
 # Copy the standalone production node_modules created in the builder stage
 COPY --from=builder /workspace/artifacts/api-server/node_modules ./node_modules
