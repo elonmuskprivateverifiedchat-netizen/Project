@@ -1,4 +1,3 @@
-import { createRequire } from "node:module";
 import { createServer } from "http";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -46,10 +45,8 @@ async function runDatabaseMigrations() {
   logger.info({ configPath }, "Running database migrations");
 
   await new Promise<void>((resolve, reject) => {
-    const require = createRequire(import.meta.url);
-    const drizzleMain = require.resolve("drizzle-kit");
-    const drizzleBin = join(dirname(drizzleMain), "bin.cjs");
-    const child = spawn(process.execPath, [drizzleBin, "push", "--config", configPath], {
+    const drizzleBin = join(process.cwd(), "node_modules", ".bin", "drizzle-kit");
+    const child = spawn(drizzleBin, ["push", "--config", configPath], {
       cwd: process.cwd(),
       stdio: "inherit",
       env: process.env,
