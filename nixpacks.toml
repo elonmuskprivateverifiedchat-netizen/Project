@@ -10,8 +10,8 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "pnpm --filter @workspace/api-server run build"
+  "pnpm --filter @workspace/trading-platform run build"
 ]
 
 [start]
-cmd = "node artifacts/api-server/dist/index.mjs"
+cmd = "pnpm --filter @workspace/trading-platform run serve"
